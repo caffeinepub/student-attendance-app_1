@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, UserPlus, Users, Trash2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UserPlus, Users, Trash2, MessageCircle, Settings } from 'lucide-react';
 import { useAttendanceSession } from '../state/attendanceSession';
 import { getStudents, deleteStudent } from '../lib/studentsRepo';
 import { Student } from '../lib/types';
 import AddStudentDialog from '../components/AddStudentDialog';
-import { buildBulkWhatsAppLink } from '../lib/whatsapp';
+import { buildBulkWhatsAppPayload, WhatsAppPayload } from '../lib/whatsapp';
+import { renderBulkMessage } from '../lib/whatsappTemplate';
+import { getTodayString, getDayOfWeek, formatDateForTemplate } from '../lib/date';
+import WhatsAppPreviewDialog from '../components/WhatsAppPreviewDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +31,8 @@ export default function StudentListPage() {
     open: false,
     student: null,
   });
+  const [whatsappPreview, setWhatsappPreview] = useState<WhatsAppPayload | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedClass || !selectedSection) {
@@ -62,10 +67,35 @@ export default function StudentListPage() {
   };
 
   const handleMessageAll = () => {
-    if (students.length === 0) return;
-    const message = 'Important update for all parents regarding class attendance.';
-    const url = buildBulkWhatsAppLink(students, message);
-    window.open(url, '_blank');
+    if (students.length === 0 || !selectedClass || !selectedSection) return;
+    
+    const today = getTodayString();
+    const day = getDayOfWeek(today);
+    const formattedDate = formatDateForTemplate(today);
+    
+    // Students without status (unknown) since we're on student list page
+    const studentsWithoutStatus = students.map(student => ({
+      name: student.name,
+      status: undefined,
+    }));
+    
+    const messageText = renderBulkMessage(
+      studentsWithoutStatus,
+      selectedClass,
+      selectedSection,
+      formattedDate,
+      day
+    );
+    
+    const payload = buildBulkWhatsAppPayload(students, messageText);
+    setWhatsappPreview(payload);
+    setIsPreviewOpen(true);
+  };
+
+  const handlePreviewConfirm = () => {
+    if (whatsappPreview?.waUrl) {
+      window.open(whatsappPreview.waUrl, '_blank');
+    }
   };
 
   return (
@@ -89,6 +119,14 @@ export default function StudentListPage() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
+              <Button 
+                onClick={() => navigate({ to: '/whatsapp-template' })}
+                variant="outline"
+                size="lg"
+                title="Edit WhatsApp template"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
               <Button 
                 onClick={handleMessageAll} 
                 disabled={students.length === 0}
@@ -172,6 +210,13 @@ export default function StudentListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <WhatsAppPreviewDialog
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        payload={whatsappPreview}
+        onConfirm={handlePreviewConfirm}
+      />
     </div>
   );
 }

@@ -23,3 +23,30 @@ export function formatDateDisplay(dateString: string): string {
     return dateString;
   }
 }
+
+// Get day of week in Hindi from date string
+export function getDayOfWeek(dateString: string): string {
+  if (!dateString) return '';
+  
+  try {
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
+    const days = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+    return days[date.getDay()];
+  } catch (error) {
+    return '';
+  }
+}
+
+// Format date in DD/MM/YYYY format for Hindi template
+export function formatDateForTemplate(dateString: string): string {
+  if (!dateString) return '';
+  
+  try {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return dateString;
+  }
+}

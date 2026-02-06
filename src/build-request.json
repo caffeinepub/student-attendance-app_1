@@ -1,12 +1,86 @@
 {
   "kind": "build_request",
-  "title": "Untitled request",
+  "title": "Add final WhatsApp message preview/confirmation before opening WhatsApp (single + Message All)",
   "priority": "normal",
-  "requirements": [],
-  "constraints": [],
-  "nonGoals": [],
+  "requirements": [
+    {
+      "id": "REQ-5",
+      "text": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Ha dono tarah dekhna chahata hu"
+        ]
+      },
+      "acceptanceCriteria": [
+        "From the Attendance page, clicking the WhatsApp icon on a student row no longer opens WhatsApp immediately.",
+        "A preview UI is shown that displays (1) the student name, (2) the parent phone number (as stored), and (3) the fully rendered message text produced from the saved template for that student/date/status.",
+        "The preview UI has at least two actions: \"Cancel\" (closes preview without opening WhatsApp) and \"Open WhatsApp\" (opens the wa.me deep link in a new tab/window).",
+        "If the student has no attendance status selected, the WhatsApp action remains unavailable as it is today (no regression)."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Ha dono tarah dekhna chahata hu"
+        ]
+      },
+      "acceptanceCriteria": [
+        "On the Attendance page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
+        "On the Student List page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
+        "The preview UI shows the final bulk message content exactly as it will be passed into the wa.me URL (including any additional appended content added by current bulk-link behavior).",
+        "The preview UI clearly indicates which phone number will be used for the wa.me link (the first student’s normalized/selected number, matching current behavior).",
+        "The preview UI provides \"Cancel\" and \"Open WhatsApp\" actions; \"Open WhatsApp\" opens the wa.me link in a new tab/window.",
+        "If there are zero students, \"Message All\" remains disabled and no preview is accessible (no regression)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The preview UI message text matches the text encoded into the wa.me link for both single and bulk flows.",
+        "There is a single shared code path per flow (single vs bulk) for constructing (a) the final message text and (b) the final wa.me URL, used by both the preview UI and the final \"Open WhatsApp\" action.",
+        "No changes are required to backend canisters; all behavior remains client-side and localStorage-based as in the current app."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit files under frontend/src/components/ui (Shadcn UI sources are read-only); compose them in new components instead.",
+    "Do not modify immutable frontend hook files listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
+    "Keep the backend as a single Motoko actor; do not add backend methods for this feature."
+  ],
+  "nonGoals": [
+    "Do not change the existing WhatsApp template editor page/feature (this is an additional final pre-send confirmation, not a replacement).",
+    "Do not add real-time messaging, chat, or any server-side WhatsApp integration; continue using wa.me deep links only.",
+    "Do not introduce authentication requirements for sending messages."
+  ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

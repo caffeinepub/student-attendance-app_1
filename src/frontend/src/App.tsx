@@ -4,6 +4,7 @@ import ClassSelectionPage from './pages/ClassSelectionPage';
 import StudentListPage from './pages/StudentListPage';
 import AttendancePage from './pages/AttendancePage';
 import SummaryPage from './pages/SummaryPage';
+import WhatsAppTemplatePage from './pages/WhatsAppTemplatePage';
 import AppLayout from './components/AppLayout';
 import { AttendanceSessionProvider } from './state/attendanceSession';
 
@@ -45,12 +46,19 @@ const summaryRoute = createRoute({
   component: SummaryPage,
 });
 
+const whatsappTemplateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/whatsapp-template',
+  component: WhatsAppTemplatePage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   classSelectionRoute,
   studentListRoute,
   attendanceRoute,
   summaryRoute,
+  whatsappTemplateRoute,
 ]);
 
 const router = createRouter({ routeTree });

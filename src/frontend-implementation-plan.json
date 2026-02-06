@@ -1,6 +1,94 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Untitled request",
-  "requirements": []
+  "title": "WhatsApp pre-send preview/confirmation for single and bulk flows",
+  "requirements": [
+    {
+      "id": "REQ-5",
+      "summary": "Show a final preview/confirmation dialog before opening WhatsApp from a single student attendance row action.",
+      "acceptanceCriteria": [
+        "From the Attendance page, clicking the WhatsApp icon on a student row no longer opens WhatsApp immediately.",
+        "A preview UI is shown that displays (1) the student name, (2) the parent phone number (as stored), and (3) the fully rendered message text produced from the saved template for that student/date/status.",
+        "The preview UI has at least two actions: \"Cancel\" (closes preview without opening WhatsApp) and \"Open WhatsApp\" (opens the wa.me deep link in a new tab/window).",
+        "If the student has no attendance status selected, the WhatsApp action remains unavailable as it is today (no regression)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/WhatsAppPreviewDialog.tsx",
+          "operation": "create",
+          "description": "Create a reusable WhatsApp preview/confirmation dialog component (compose shadcn-ui AlertDialog/Dialog primitives; do not edit frontend/src/components/ui). Display student name (when provided), stored phone number, wa.me target number, and the final message text; provide Cancel and Open WhatsApp actions. Use the shadcn-ui component library for dialog structure—verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/StudentAttendanceRow.tsx",
+          "operation": "modify",
+          "description": "Refactor the row WhatsApp action so it no longer calls window.open directly. Instead, invoke a provided callback to request opening the WhatsApp preview with the computed single-recipient payload (student + message + wa.me URL), while keeping the WhatsApp icon hidden/disabled when no status is selected (no regression)."
+        },
+        {
+          "path": "frontend/src/pages/AttendancePage.tsx",
+          "operation": "modify",
+          "description": "Wire the single-recipient preview flow on the Attendance page: maintain state for the active WhatsApp preview payload and open/close the WhatsAppPreviewDialog when a row requests it. On \"Open WhatsApp\", open the computed wa.me URL in a new tab/window and then close the dialog. Use the WhatsAppPreviewDialog component—verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Show a final preview/confirmation dialog before opening WhatsApp from the “Message All” bulk action on Attendance and Student List pages.",
+      "acceptanceCriteria": [
+        "On the Attendance page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
+        "On the Student List page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
+        "The preview UI shows the final bulk message content exactly as it will be passed into the wa.me URL (including any additional appended content added by current bulk-link behavior).",
+        "The preview UI clearly indicates which phone number will be used for the wa.me link (the first student’s normalized/selected number, matching current behavior).",
+        "The preview UI provides \"Cancel\" and \"Open WhatsApp\" actions; \"Open WhatsApp\" opens the wa.me link in a new tab/window.",
+        "If there are zero students, \"Message All\" remains disabled and no preview is accessible (no regression)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AttendancePage.tsx",
+          "operation": "modify",
+          "description": "Change the bulk \"Message All\" handler to compute a bulk WhatsApp payload and open the WhatsAppPreviewDialog instead of opening WhatsApp immediately. Ensure the dialog shows the final bulk message text (including any appended contacts content) and the wa.me target number (first student's normalized number), and that Open WhatsApp opens the same URL in a new tab/window."
+        },
+        {
+          "path": "frontend/src/pages/StudentListPage.tsx",
+          "operation": "modify",
+          "description": "Change the bulk \"Message All\" handler to compute a bulk WhatsApp payload and open the WhatsAppPreviewDialog instead of opening WhatsApp immediately. Keep the existing disabled behavior when there are zero students, and ensure the preview matches the exact message text/wa.me link currently produced for bulk."
+        },
+        {
+          "path": "frontend/src/components/WhatsAppPreviewDialog.tsx",
+          "operation": "modify",
+          "description": "Extend the preview dialog component to support both single and bulk contexts (e.g., optional student name section, bulk labeling). Ensure it can display the bulk final message text and the wa.me target number, and supports Cancel/Open WhatsApp actions. Use shadcn-ui dialog primitives—verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Refactor WhatsApp message/link generation so preview and final open action share the exact same construction logic for single and bulk flows.",
+      "acceptanceCriteria": [
+        "The preview UI message text matches the text encoded into the wa.me link for both single and bulk flows.",
+        "There is a single shared code path per flow (single vs bulk) for constructing (a) the final message text and (b) the final wa.me URL, used by both the preview UI and the final \"Open WhatsApp\" action.",
+        "No changes are required to backend canisters; all behavior remains client-side and localStorage-based as in the current app."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/whatsapp.ts",
+          "operation": "modify",
+          "description": "Refactor WhatsApp utilities to expose shared builders that return both (1) the final message text (post-fallback and, for bulk, including any appended content) and (2) the final wa.me URL, plus the normalized target number. Update existing functions/exports as needed so pages/components can rely on one shared construction path per flow without duplicating message-building logic."
+        },
+        {
+          "path": "frontend/src/pages/AttendancePage.tsx",
+          "operation": "modify",
+          "description": "Update Attendance page single and bulk WhatsApp flows to use the refactored shared WhatsApp builder utilities for both preview display and the final \"Open WhatsApp\" action (so the preview message matches the encoded URL text)."
+        },
+        {
+          "path": "frontend/src/pages/StudentListPage.tsx",
+          "operation": "modify",
+          "description": "Update Student List page bulk WhatsApp flow to use the refactored shared WhatsApp builder utilities for both preview display and the final \"Open WhatsApp\" action (so the preview message matches the encoded URL text)."
+        },
+        {
+          "path": "frontend/src/components/StudentAttendanceRow.tsx",
+          "operation": "modify",
+          "description": "Ensure the row-level WhatsApp action uses the shared WhatsApp builder utility (via its parent callback flow) so the preview and the final wa.me opening use the exact same single-recipient construction logic."
+        }
+      ]
+    }
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 10,
+  "projectStateVersion": 14,
   "summary": "Student Attendance App implemented with Home, Class/Section selection (Class 1–10), local student management, daily attendance marking with present/absent, summary totals, and WhatsApp wa.me deep-link messaging; designed for simple bilingual-friendly UI and no required login.",
   "architectural_notes": [
     "Store student list locally on device (no login).",
@@ -9,10 +9,10 @@
     "WhatsApp integration will use a wa.me link with the message pre-filled (deep link/intent).",
     "Class dropdown will use predefined values (Class 1–10).",
     "All student and attendance data will be stored locally only (no cloud sync); data may be lost if the user clears app/browser storage.",
-    "User requested to start building/implementing the app features.",
     "Frontend implemented as a multi-page React flow (Home, Class Selection, Student List, Attendance, Summary).",
     "Local persistence implemented via a local storage abstraction/repositories (studentsRepo/attendanceRepo/localStore).",
-    "WhatsApp messaging implemented via helper that constructs wa.me links with encoded prefilled text and parent phone number."
+    "WhatsApp messaging implemented via helper that constructs wa.me links with encoded prefilled text and parent phone number.",
+    "Store WhatsApp message template locally and render placeholders (student name, class/section, date/day) before constructing wa.me links for single and bulk messages."
   ],
   "known_issues": [
     "Project includes Internet Identity/actor scaffolding from the build template; core app flow is intended to work without login, but auth-related code may need pruning/confirmation of non-use."
@@ -105,18 +105,80 @@
         "AR-7"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-a-locally-persisted-editable-whatsapp-message-template-that-supports-placeholders-for-student-name-class-section-attendance-date-day-of-week-and-attendance-status-and-initialize-it-with-the-user-provided-hindi-template",
+      "title": "Add a locally-persisted, editable WhatsApp message template that supports placeholders for student name, class, section, attendance date, day-of-week, and attendance status, and initialize it with the user-provided Hindi template.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-individual-student-whatsapp-messaging-so-the-whatsapp-link-text-uses-the-saved-template-with-placeholders-auto-filled-from-the-current-attendance-session-selected-class-section-date-and-the-student-row-s-attendance-status",
+      "title": "Update individual-student WhatsApp messaging so the WhatsApp link text uses the saved template with placeholders auto-filled from the current attendance session (selected class/section/date) and the student row’s attendance status.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-bulk-whatsapp-messaging-message-all-so-it-uses-the-same-saved-template-and-produces-a-single-whatsapp-link-message-that-contains-per-student-filled-entries-since-whatsapp-deep-links-can-only-target-one-number",
+      "title": "Update bulk WhatsApp messaging (“Message All”) so it uses the same saved template and produces a single WhatsApp link message that contains per-student filled entries (since WhatsApp deep links can only target one number).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-ui-to-view-and-edit-the-whatsapp-message-template-e-g-a-new-page-reachable-from-existing-screens-including-a-preview-that-shows-how-placeholders-will-be-replaced-for-a-sample-student-and-the-currently-selected-class-section-date",
+      "title": "Add an in-app UI to view and edit the WhatsApp message template (e.g., a new page reachable from existing screens), including a preview that shows how placeholders will be replaced for a sample student and the currently selected class/section/date.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-final-confirmation-preview-ui-that-appears-immediately-before-opening-whatsapp-for-a-single-student-from-the-attendance-row-whatsapp-action-showing-the-exact-message-text-and-the-destination-phone-number-with-explicit-actions-to-cancel-or-proceed-to-open-whatsapp",
+      "title": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-final-confirmation-preview-ui-that-appears-immediately-before-opening-whatsapp-for-the-message-all-bulk-whatsapp-action-on-both-the-student-list-page-and-the-attendance-page-showing-the-exact-final-message-text-that-will-be-sent-and-the-target-wa-me-number-being-used",
+      "title": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-refactor-whatsapp-message-link-generation-utilities-as-needed-so-the-preview-uis-can-display-the-exact-final-message-text-that-will-be-used-for-both-single-recipient-and-bulk-wa-me-links-without-duplicating-message-building-logic-across-pages-components",
+      "title": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
     {
-      "id": "AR-8",
-      "summary": "Add 'Send message to all students' option using WhatsApp deep-link with multiple numbers and a fixed prefilled message",
+      "id": "AR-9",
+      "summary": "Allow deleting a student from the student list (delete button per student row)",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-9",
-      "summary": "Allow deleting a student from the student list (delete button per student row)",
+      "id": "AR-10",
+      "summary": "Add editable WhatsApp message template used for both single-student and send-to-all messaging, with auto-filled placeholders for student name and selected class/section plus date/day",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Add a final confirmation/preview screen shown immediately before opening WhatsApp, for both single-student messages and the \"Message All\" bulk message",
       "reqIds": [],
       "status": "pending"
     }

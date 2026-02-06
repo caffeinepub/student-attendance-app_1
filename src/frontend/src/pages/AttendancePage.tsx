@@ -2,20 +2,24 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, Calendar, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, MessageCircle, Settings } from 'lucide-react';
 import { useAttendanceSession } from '../state/attendanceSession';
 import { getStudents } from '../lib/studentsRepo';
 import { getAttendanceForDate, saveAttendance } from '../lib/attendanceRepo';
 import { Student, AttendanceStatus } from '../lib/types';
-import { getTodayString, formatDateDisplay } from '../lib/date';
+import { getTodayString, formatDateDisplay, getDayOfWeek, formatDateForTemplate } from '../lib/date';
 import StudentAttendanceRow from '../components/StudentAttendanceRow';
-import { buildBulkWhatsAppLink } from '../lib/whatsapp';
+import { buildBulkWhatsAppPayload, buildSingleWhatsAppPayload, WhatsAppPayload } from '../lib/whatsapp';
+import { renderBulkMessage, renderStudentMessage } from '../lib/whatsappTemplate';
+import WhatsAppPreviewDialog from '../components/WhatsAppPreviewDialog';
 
 export default function AttendancePage() {
   const navigate = useNavigate();
   const { selectedClass, selectedSection, selectedDate, setSelectedDate } = useAttendanceSession();
   const [students, setStudents] = useState<Student[]>([]);
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
+  const [whatsappPreview, setWhatsappPreview] = useState<WhatsAppPayload | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedClass || !selectedSection) {
@@ -42,15 +46,66 @@ export default function AttendancePage() {
     }
   };
 
+  const handleSingleWhatsAppClick = (student: Student, status: AttendanceStatus) => {
+    if (!selectedDate || !selectedClass || !selectedSection) return;
+
+    const day = getDayOfWeek(selectedDate);
+    const formattedDate = formatDateForTemplate(selectedDate);
+
+    const messageText = renderStudentMessage(
+      student.name,
+      selectedClass,
+      selectedSection,
+      formattedDate,
+      day,
+      status
+    );
+
+    const payload = buildSingleWhatsAppPayload(
+      student.parentMobile,
+      messageText,
+      student.name
+    );
+
+    setWhatsappPreview(payload);
+    setIsPreviewOpen(true);
+  };
+
   const handleMessageAll = () => {
-    if (students.length === 0) return;
-    const message = `Attendance update for ${formatDateDisplay(selectedDate || getTodayString())} - Class ${selectedClass} Section ${selectedSection}`;
-    const url = buildBulkWhatsAppLink(students, message);
-    window.open(url, '_blank');
+    if (students.length === 0 || !selectedDate || !selectedClass || !selectedSection) return;
+    
+    const studentsWithStatus = students.map(student => ({
+      name: student.name,
+      status: attendance[student.id],
+    }));
+    
+    const day = getDayOfWeek(selectedDate);
+    const formattedDate = formatDateForTemplate(selectedDate);
+    
+    const messageText = renderBulkMessage(
+      studentsWithStatus,
+      selectedClass,
+      selectedSection,
+      formattedDate,
+      day
+    );
+    
+    const payload = buildBulkWhatsAppPayload(students, messageText);
+    setWhatsappPreview(payload);
+    setIsPreviewOpen(true);
+  };
+
+  const handlePreviewConfirm = () => {
+    if (whatsappPreview?.waUrl) {
+      window.open(whatsappPreview.waUrl, '_blank');
+    }
   };
 
   const markedCount = Object.keys(attendance).length;
   const totalCount = students.length;
+  
+  const currentDay = selectedDate ? getDayOfWeek(selectedDate) : '';
+  const formattedDate = selectedDate ? formatDateForTemplate(selectedDate) : '';
 
   return (
     <div className="space-y-6 py-8">
@@ -76,15 +131,25 @@ export default function AttendancePage() {
                 Marked: {markedCount} / {totalCount}
               </div>
             </div>
-            <Button 
-              onClick={handleMessageAll} 
-              disabled={students.length === 0}
-              variant="outline"
-              size="lg"
-            >
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Message All
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => navigate({ to: '/whatsapp-template' })}
+                variant="outline"
+                size="lg"
+                title="Edit WhatsApp template"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+              <Button 
+                onClick={handleMessageAll} 
+                disabled={students.length === 0}
+                variant="outline"
+                size="lg"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Message All
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -100,6 +165,11 @@ export default function AttendancePage() {
                   student={student}
                   status={attendance[student.id]}
                   onStatusChange={(status) => handleAttendanceChange(student.id, status)}
+                  onWhatsAppClick={() => handleSingleWhatsAppClick(student, attendance[student.id])}
+                  classValue={selectedClass || ''}
+                  section={selectedSection || ''}
+                  date={formattedDate}
+                  day={currentDay}
                 />
               ))}
             </div>
@@ -115,6 +185,13 @@ export default function AttendancePage() {
           </Button>
         </CardContent>
       </Card>
+
+      <WhatsAppPreviewDialog
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        payload={whatsappPreview}
+        onConfirm={handlePreviewConfirm}
+      />
     </div>
   );
 }

@@ -3,19 +3,31 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, MessageCircle } from 'lucide-react';
 import { Student, AttendanceStatus } from '../lib/types';
-import { buildWhatsAppLink } from '../lib/whatsapp';
 
 interface StudentAttendanceRowProps {
   student: Student;
   status?: AttendanceStatus;
   onStatusChange: (status: AttendanceStatus) => void;
+  onWhatsAppClick?: () => void;
+  classValue: string;
+  section: string;
+  date: string;
+  day: string;
 }
 
-export default function StudentAttendanceRow({ student, status, onStatusChange }: StudentAttendanceRowProps) {
+export default function StudentAttendanceRow({ 
+  student, 
+  status, 
+  onStatusChange,
+  onWhatsAppClick,
+  classValue,
+  section,
+  date,
+  day
+}: StudentAttendanceRowProps) {
   const handleWhatsApp = () => {
-    if (status) {
-      const url = buildWhatsAppLink(student.parentMobile, status);
-      window.open(url, '_blank');
+    if (status && onWhatsAppClick) {
+      onWhatsAppClick();
     }
   };
 

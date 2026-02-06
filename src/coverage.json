@@ -1,24 +1,71 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T16:32:59.131Z",
+  "generatedAt": "2026-02-06T05:53:48.497Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 0,
-    "implemented": 0,
-    "items": []
+    "total": 3,
+    "implemented": 3,
+    "items": [
+      {
+        "id": "REQ-5",
+        "summary": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/WhatsAppPreviewDialog.tsx",
+          "frontend/src/components/StudentAttendanceRow.tsx",
+          "frontend/src/pages/AttendancePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/WhatsAppPreviewDialog.tsx",
+          "frontend/src/components/StudentAttendanceRow.tsx",
+          "frontend/src/pages/AttendancePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/StudentListPage.tsx",
+          "frontend/src/components/WhatsAppPreviewDialog.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/StudentListPage.tsx",
+          "frontend/src/components/WhatsAppPreviewDialog.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/whatsapp.ts",
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/StudentListPage.tsx",
+          "frontend/src/components/StudentAttendanceRow.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/whatsapp.ts",
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/StudentListPage.tsx",
+          "frontend/src/components/StudentAttendanceRow.tsx"
+        ]
+      }
+    ]
   },
   "changedFiles": [
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/lib/studentsRepo.ts",
+    "frontend/src/components/StudentAttendanceRow.tsx",
+    "frontend/src/components/WhatsAppPreviewDialog.tsx",
     "frontend/src/lib/whatsapp.ts",
     "frontend/src/pages/AttendancePage.tsx",
     "frontend/src/pages/StudentListPage.tsx",
