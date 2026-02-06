@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 10,
+  "summary": "Student Attendance App implemented with Home, Class/Section selection (Class 1–10), local student management, daily attendance marking with present/absent, summary totals, and WhatsApp wa.me deep-link messaging; designed for simple bilingual-friendly UI and no required login.",
+  "architectural_notes": [
+    "Store student list locally on device (no login).",
+    "Persist attendance records locally including date and present/absent status per student.",
+    "Use WhatsApp deep link/intent to prefill message for parent mobile number.",
+    "WhatsApp integration will use a wa.me link with the message pre-filled (deep link/intent).",
+    "Class dropdown will use predefined values (Class 1–10).",
+    "All student and attendance data will be stored locally only (no cloud sync); data may be lost if the user clears app/browser storage.",
+    "User requested to start building/implementing the app features.",
+    "Frontend implemented as a multi-page React flow (Home, Class Selection, Student List, Attendance, Summary).",
+    "Local persistence implemented via a local storage abstraction/repositories (studentsRepo/attendanceRepo/localStore).",
+    "WhatsApp messaging implemented via helper that constructs wa.me links with encoded prefilled text and parent phone number."
+  ],
+  "known_issues": [
+    "Project includes Internet Identity/actor scaffolding from the build template; core app flow is intended to work without login, but auth-related code may need pruning/confirmation of non-use."
+  ],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "Home screen with Start Attendance entry point",
+      "synonyms": [
+        "HomePage"
+      ],
+      "description": "Landing page showing app title and a primary action to start/select class for attendance flow.",
+      "reqIds": [
+        "AR-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Class & Section selection screen (predefined Class 1–10)",
+      "synonyms": [
+        "ClassSelectionPage"
+      ],
+      "description": "Screen to select class (1–10) and section, then continue into student/attendance workflow.",
+      "reqIds": [
+        "AR-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "Student list management with local persistence",
+      "synonyms": [
+        "StudentListPage",
+        "AddStudentDialog"
+      ],
+      "description": "Add and view students with name, roll number, and parent mobile number; data persists locally on the device/browser.",
+      "reqIds": [
+        "AR-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "Attendance marking screen with current date and local save",
+      "synonyms": [
+        "AttendancePage",
+        "StudentAttendanceRow"
+      ],
+      "description": "Displays current date and student list; allows marking Present/Absent per student and stores the record locally per session/date.",
+      "reqIds": [
+        "AR-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "WhatsApp wa.me deep-link integration for attendance notifications",
+      "synonyms": [
+        "WhatsApp deep link"
+      ],
+      "description": "On selecting Present/Absent, opens WhatsApp via wa.me link with a prefilled message to the parent mobile number.",
+      "reqIds": [
+        "AR-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-6",
+      "title": "Attendance summary screen (Present/Absent totals)",
+      "synonyms": [
+        "SummaryPage"
+      ],
+      "description": "Shows total Present and total Absent for the attendance session/date.",
+      "reqIds": [
+        "AR-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "IF-7",
+      "title": "Simple UI scaffold and bilingual-friendly UX baseline (no required login)",
+      "synonyms": [
+        "AppLayout",
+        "UI/UX baseline"
+      ],
+      "description": "App layout and UI components set up for a simple, Hindi+English-friendly experience; no login required to use core features.",
+      "reqIds": [
+        "AR-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-8",
+      "summary": "Add 'Send message to all students' option using WhatsApp deep-link with multiple numbers and a fixed prefilled message",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Allow deleting a student from the student list (delete button per student row)",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Student Attendance App",
+  "clarification_mode": "pro",
+  "clarification_rounds": 0
+}

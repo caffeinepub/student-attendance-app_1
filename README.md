@@ -1,2 +1,3 @@
-# student-attendance-app_1
-Exported from Caffeine project: Student Attendance App
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`
