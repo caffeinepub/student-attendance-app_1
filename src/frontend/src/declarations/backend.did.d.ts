@@ -10,7 +10,39 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface _SERVICE {}
+export interface StoredStudent { 'id' : bigint, 'student' : Student }
+export interface Student {
+  'fullName' : string,
+  'section' : string,
+  'parentMobileNumber' : string,
+  'rollNumber' : bigint,
+  'className' : string,
+}
+export interface UserProfile { 'name' : string, 'role' : string }
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
+export interface _SERVICE {
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  /**
+   * / Student Management Functions
+   */
+  'addStudent' : ActorMethod<[Student], bigint>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteStudent' : ActorMethod<[bigint], undefined>,
+  'getAllStudents' : ActorMethod<[], Array<StoredStudent>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getClassSectionStudents' : ActorMethod<
+    [string, string],
+    Array<[bigint, Student]>
+  >,
+  'getStudent' : ActorMethod<[bigint], [] | [Student]>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'updateStudent' : ActorMethod<[bigint, Student], undefined>,
+}
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
 export declare const idlFactory: IDL.InterfaceFactory;

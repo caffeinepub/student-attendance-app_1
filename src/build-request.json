@@ -1,86 +1,91 @@
 {
   "kind": "build_request",
-  "title": "Add final WhatsApp message preview/confirmation before opening WhatsApp (single + Message All)",
-  "priority": "normal",
+  "title": "Fix missing students across classes (ID collisions + persistence across upgrades)",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-5",
-      "text": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+      "id": "REQ-1",
+      "text": "Prevent students from disappearing when users add students in multiple classes/sections by eliminating ID collisions in the backend storage keying strategy.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Student sabhi gayab ho gaye hai\nMaine 9,8,7 class main student add kiya the vo sab gayab ho gaye hai",
+          "Fix build karo"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Adding students to Class 7, Class 8, and Class 9 does not overwrite previously added students in other classes/sections.",
+        "After adding students to multiple classes/sections, each class/section’s Student List shows the correct students when navigating between classes.",
+        "Backend rejects or safely handles any attempt to add/update a student record that would overwrite an unrelated existing student due to non-unique IDs."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Fix build karo"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Creating a student in an empty class/section after adding students elsewhere still produces a unique ID that does not conflict with existing students.",
+        "No class/section uses duplicated IDs that cause another class/section’s student to disappear.",
+        "User-facing behavior remains the same: user enters Student Name, Roll Number, and Parent Mobile Number and the student appears in the current class/section list."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Fix build karo"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After an upgrade, previously added students are still returned by the backend APIs and appear in the UI.",
+        "The backend’s ID generation continues correctly after an upgrade (no reset that could reintroduce ID collisions)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Ha dono tarah dekhna chahata hu"
+          "Ismein vah student nahin dikh raha hai jo maine different classes mein add kiye the",
+          "Student sabhi gayab ho gaye hai"
         ]
       },
       "acceptanceCriteria": [
-        "From the Attendance page, clicking the WhatsApp icon on a student row no longer opens WhatsApp immediately.",
-        "A preview UI is shown that displays (1) the student name, (2) the parent phone number (as stored), and (3) the fully rendered message text produced from the saved template for that student/date/status.",
-        "The preview UI has at least two actions: \"Cancel\" (closes preview without opening WhatsApp) and \"Open WhatsApp\" (opens the wa.me deep link in a new tab/window).",
-        "If the student has no attendance status selected, the WhatsApp action remains unavailable as it is today (no regression)."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Ha dono tarah dekhna chahata hu"
-        ]
-      },
-      "acceptanceCriteria": [
-        "On the Attendance page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
-        "On the Student List page, clicking \"Message All\" shows a preview UI instead of opening WhatsApp immediately.",
-        "The preview UI shows the final bulk message content exactly as it will be passed into the wa.me URL (including any additional appended content added by current bulk-link behavior).",
-        "The preview UI clearly indicates which phone number will be used for the wa.me link (the first student’s normalized/selected number, matching current behavior).",
-        "The preview UI provides \"Cancel\" and \"Open WhatsApp\" actions; \"Open WhatsApp\" opens the wa.me link in a new tab/window.",
-        "If there are zero students, \"Message All\" remains disabled and no preview is accessible (no regression)."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The preview UI message text matches the text encoded into the wa.me link for both single and bulk flows.",
-        "There is a single shared code path per flow (single vs bulk) for constructing (a) the final message text and (b) the final wa.me URL, used by both the preview UI and the final \"Open WhatsApp\" action.",
-        "No changes are required to backend canisters; all behavior remains client-side and localStorage-based as in the current app."
+        "When the Student List is empty, the UI distinguishes (in English) between: not logged in/not authorized, loading error, and genuinely no students.",
+        "There is a way to confirm whether any students exist in the backend even if the selected class/section list is empty (without exposing private data to unauthorized users)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (Shadcn UI sources are read-only); compose them in new components instead.",
-    "Do not modify immutable frontend hook files listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
-    "Keep the backend as a single Motoko actor; do not add backend methods for this feature."
+    "Backend must remain a single-actor Motoko canister (all logic in backend/main.mo).",
+    "Do not modify frontend files under frontend/src/components/ui, frontend/src/hooks/useInternetIdentity.ts/.tsx, frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (compose instead)."
   ],
   "nonGoals": [
-    "Do not change the existing WhatsApp template editor page/feature (this is an additional final pre-send confirmation, not a replacement).",
-    "Do not add real-time messaging, chat, or any server-side WhatsApp integration; continue using wa.me deep links only.",
-    "Do not introduce authentication requirements for sending messages."
+    "Do not implement the monthly attendance download/export feature in this build (PDF/Excel/CSV).",
+    "Do not add third-party authentication providers; Internet Identity only."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

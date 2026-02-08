@@ -1,24 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAttendanceSession } from '../state/attendanceSession';
-import { useAddStudent } from '../hooks/useStudents';
+import { useUpdateStudent } from '../hooks/useStudents';
 import { useAuth, getAuthErrorMessage } from '../hooks/useAuth';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getClassDisplayName } from '../constants/school';
 import { validateStudentForm } from '../lib/validation';
+import { StoredStudent } from '../backend';
 
-interface AddStudentDialogProps {
+interface EditStudentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStudentAdded: () => void;
+  student: StoredStudent | null;
+  onStudentUpdated: () => void;
 }
 
-export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }: AddStudentDialogProps) {
-  const { selectedClass, selectedSection } = useAttendanceSession();
+export default function EditStudentDialog({ open, onOpenChange, student, onStudentUpdated }: EditStudentDialogProps) {
   const { isAuthenticated, isAuthorized } = useAuth();
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
@@ -26,20 +26,32 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState('');
   
-  const addStudentMutation = useAddStudent();
+  const updateStudentMutation = useUpdateStudent();
+
+  useEffect(() => {
+    if (student) {
+      setName(student.student.fullName);
+      setRollNumber(student.student.rollNumber.toString());
+      setParentMobile(student.student.parentMobileNumber);
+      setErrors({});
+      setErrorMessage('');
+    }
+  }, [student]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isAuthenticated) {
-      setErrorMessage('Please log in to add students.');
+      setErrorMessage('Please log in to edit students.');
       return;
     }
 
     if (!isAuthorized) {
-      setErrorMessage('You are not authorized to add students.');
+      setErrorMessage('You are not authorized to edit students.');
       return;
     }
+
+    if (!student) return;
 
     const validation = validateStudentForm(name, rollNumber, parentMobile);
     
@@ -48,46 +60,44 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
       return;
     }
 
-    if (selectedClass && selectedSection) {
-      try {
-        await addStudentMutation.mutateAsync({
-          name: name.trim(),
-          rollNumber: rollNumber.trim(),
-          parentMobile: parentMobile.trim(),
-          className: selectedClass,
-          section: selectedSection,
-        });
+    try {
+      await updateStudentMutation.mutateAsync({
+        id: student.id,
+        fullName: name.trim(),
+        rollNumber: rollNumber.trim(),
+        parentMobileNumber: parentMobile.trim(),
+        className: student.student.className,
+        section: student.student.section,
+      });
 
-        setName('');
-        setRollNumber('');
-        setParentMobile('');
-        setErrors({});
-        setErrorMessage('');
-        onStudentAdded();
-      } catch (err) {
-        setErrorMessage(getAuthErrorMessage(err));
-      }
+      setErrors({});
+      setErrorMessage('');
+      onStudentUpdated();
+    } catch (err) {
+      setErrorMessage(getAuthErrorMessage(err));
     }
   };
 
   const handleCancel = () => {
-    setName('');
-    setRollNumber('');
-    setParentMobile('');
+    if (student) {
+      setName(student.student.fullName);
+      setRollNumber(student.student.rollNumber.toString());
+      setParentMobile(student.student.parentMobileNumber);
+    }
     setErrors({});
     setErrorMessage('');
     onOpenChange(false);
   };
 
-  const classDisplayName = selectedClass ? getClassDisplayName(selectedClass) : '';
+  const classDisplayName = student ? getClassDisplayName(student.student.className) : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
+          <DialogTitle>Edit Student</DialogTitle>
           <DialogDescription>
-            Enter student details for {classDisplayName} - Section {selectedSection}
+            Update student details for {classDisplayName} - Section {student?.student.section}
           </DialogDescription>
         </DialogHeader>
         
@@ -101,9 +111,9 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Student Name *</Label>
+              <Label htmlFor="edit-name">Student Name *</Label>
               <Input
-                id="name"
+                id="edit-name"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -116,9 +126,9 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rollNumber">Roll Number *</Label>
+              <Label htmlFor="edit-rollNumber">Roll Number *</Label>
               <Input
-                id="rollNumber"
+                id="edit-rollNumber"
                 value={rollNumber}
                 onChange={(e) => {
                   setRollNumber(e.target.value);
@@ -131,9 +141,9 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="parentMobile">Parent Mobile Number *</Label>
+              <Label htmlFor="edit-parentMobile">Parent Mobile Number *</Label>
               <Input
-                id="parentMobile"
+                id="edit-parentMobile"
                 value={parentMobile}
                 onChange={(e) => {
                   setParentMobile(e.target.value);
@@ -149,14 +159,14 @@ export default function AddStudentDialog({ open, onOpenChange, onStudentAdded }:
             <Button type="button" variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={addStudentMutation.isPending || !isAuthenticated || !isAuthorized}>
-              {addStudentMutation.isPending ? (
+            <Button type="submit" disabled={updateStudentMutation.isPending || !isAuthenticated || !isAuthorized}>
+              {updateStudentMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Adding...
+                  Saving...
                 </>
               ) : (
-                'Add Student'
+                'Save Changes'
               )}
             </Button>
           </DialogFooter>

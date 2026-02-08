@@ -1,35 +1,66 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T05:53:48.494Z",
-  "summary": "Implemented a reusable WhatsApp preview/confirmation dialog and refactored WhatsApp link construction into shared payload builders, integrating the preview flow for single-student (Attendance row) and bulk “Message All” (Attendance + Student List). One notable gap is that the single-recipient preview displays a normalized phone number rather than the phone number “as stored.”",
+  "generatedAt": "2026-02-08T16:31:09.148Z",
+  "summary": "Backend now generates student IDs from a global counter and adds a class-section index map, and frontend adds an empty-state diagnostic path via fetching all students. However, upgrade persistence is not clearly implemented from the provided diff, backend overwrite-safety on update is missing, and several unrequested/forbidden frontend changes appear (including modifying frontend/src/main.tsx and adding unrelated WhatsApp/template/theme/class-list changes).",
   "missing_requirements": [
     {
-      "id": "REQ-5",
-      "requirement": "Preview UI for a single student must display the parent phone number as stored (not normalized/rewritten).",
-      "reason": "The preview dialog displays `payload.targetNumber`, which is derived from `normalizePhoneNumber(phoneNumber)` and then formatted with `+...`, rather than showing the original stored `student.parentMobile` value.",
+      "id": "REQ-1",
+      "requirement": "Backend rejects or safely handles any attempt to add/update a student record that would overwrite an unrelated existing student due to non-unique IDs.",
+      "reason": "While addStudent now uses a global counter, updateStudent unconditionally overwrites the students map entry for the provided id with no validation that the id exists or belongs to the same class/section, and no safeguard against overwriting an unrelated record.",
       "evidence": [
-        "frontend/src/components/WhatsAppPreviewDialog.tsx",
-        "frontend/src/lib/whatsapp.ts",
-        "frontend/src/pages/AttendancePage.tsx"
+        "backend/main.mo (updateStudent: `students.add(id, student);`)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+      "reason": "The diff shows new migration logic, but the provided backend/main.mo excerpt defines `students`, `classSectionStudents`, `rollCalls` as `let` and `idCounter` as a non-stable `var` initialized to 0, with no visible `stable` declarations or preupgrade/postupgrade hooks in the shown portion. Persistence across upgrades cannot be confirmed from the diff summary evidence.",
+      "evidence": [
+        "backend/main.mo (shows `let students = Map.empty...`, `var idCounter = 0;`)",
+        "backend/migration.mo (added migration module, but persistence wiring beyond `(with migration = Migration.run)` is not evidenced)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Bulk WhatsApp payload builder appends a hardcoded “Parent contacts” list (with Hindi/English header) containing every student name and parentMobile into the message body.",
-      "reason": "REQ-6 requires previewing the exact final bulk message as passed into the wa.me URL, but does not itself request changing/adding new appended content. The diff introduces a specific appended contacts block inside the shared bulk builder, which may be an unrequested behavioral change if this was not already the app’s existing bulk-link behavior.",
+      "description": "Modified a forbidden frontend file (frontend/src/main.tsx), including removing/altering Internet Identity provider usage.",
+      "reason": "BuildRequest explicitly disallows modifying frontend/src/main.tsx and requires Internet Identity only; diff summary indicates main.tsx was changed and auth provider removed.",
       "evidence": [
-        "frontend/src/lib/whatsapp.ts"
+        "frontend-file-summaries.txt (entry for `frontend/src/main.tsx`: \"removed InternetIdentityProvider as authentication is not required\")"
+      ]
+    },
+    {
+      "description": "Added/changed WhatsApp template editor routing and related WhatsApp/template features beyond the requested student-ID/persistence/diagnostic fix.",
+      "reason": "Not requested in BuildRequest; appears as additional product functionality.",
+      "evidence": [
+        "frontend-file-summaries.txt (entry for `frontend/src/App.tsx`: \"including the new WhatsApp template editor route\")",
+        "frontend-file-summaries.txt (entries for `frontend/src/lib/whatsapp.ts`, `frontend/src/lib/whatsappTemplate.ts` (truncated))"
+      ]
+    },
+    {
+      "description": "Expanded/modified class constants to include Nursery/LKG/UKG and changed class display formatting.",
+      "reason": "Not part of the stated requirements; could be unrelated scope expansion.",
+      "evidence": [
+        "frontend-file-summaries.txt (entry for `frontend/src/constants/school.ts`: \"Nursery, LKG, UKG added\")",
+        "frontend-file-summaries.txt (entry for `frontend/src/pages/ClassSelectionPage.tsx`: display updated for Nursery/LKG/UKG)"
+      ]
+    },
+    {
+      "description": "Large UI/theme and styling system changes (OKLCH theme, Tailwind config changes).",
+      "reason": "Not requested; requirements focus on ID collisions, persistence, and diagnostic empty state messaging.",
+      "evidence": [
+        "frontend-file-summaries.txt (entries for `frontend/src/index.css`, `frontend/tailwind.config.js`)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.63,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/StudentAttendanceRow.tsx",
-    "frontend/src/components/WhatsAppPreviewDialog.tsx",
-    "frontend/src/lib/whatsapp.ts",
+    "frontend/src/components/EditStudentDialog.tsx",
+    "frontend/src/hooks/useStudents.ts",
     "frontend/src/pages/AttendancePage.tsx",
     "frontend/src/pages/StudentListPage.tsx",
     "project_state.json"

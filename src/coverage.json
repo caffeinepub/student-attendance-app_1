@@ -1,72 +1,71 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T05:53:48.497Z",
+  "generatedAt": "2026-02-08T16:31:09.150Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-5",
-        "summary": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+        "id": "REQ-1",
+        "summary": "Prevent students from disappearing when users add students in multiple classes/sections by eliminating ID collisions in the backend storage keying strategy.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/WhatsAppPreviewDialog.tsx",
-          "frontend/src/components/StudentAttendanceRow.tsx",
-          "frontend/src/pages/AttendancePage.tsx"
+          "frontend/src/hooks/useStudents.ts",
+          "frontend/src/components/AddStudentDialog.tsx",
+          "frontend/src/pages/StudentListPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/WhatsAppPreviewDialog.tsx",
-          "frontend/src/components/StudentAttendanceRow.tsx",
-          "frontend/src/pages/AttendancePage.tsx"
+          "frontend/src/hooks/useStudents.ts",
+          "frontend/src/pages/StudentListPage.tsx"
         ]
       },
       {
-        "id": "REQ-6",
-        "summary": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/AttendancePage.tsx",
-          "frontend/src/pages/StudentListPage.tsx",
-          "frontend/src/components/WhatsAppPreviewDialog.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/AttendancePage.tsx",
-          "frontend/src/pages/StudentListPage.tsx",
-          "frontend/src/components/WhatsAppPreviewDialog.tsx"
-        ]
+        "id": "REQ-3",
+        "summary": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
-        "id": "REQ-7",
-        "summary": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
+        "id": "REQ-4",
+        "summary": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/whatsapp.ts",
-          "frontend/src/pages/AttendancePage.tsx",
-          "frontend/src/pages/StudentListPage.tsx",
-          "frontend/src/components/StudentAttendanceRow.tsx"
+          "frontend/src/hooks/useStudents.ts",
+          "frontend/src/pages/StudentListPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/whatsapp.ts",
-          "frontend/src/pages/AttendancePage.tsx",
-          "frontend/src/pages/StudentListPage.tsx",
-          "frontend/src/components/StudentAttendanceRow.tsx"
+          "frontend/src/hooks/useStudents.ts",
+          "frontend/src/pages/StudentListPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/StudentAttendanceRow.tsx",
-    "frontend/src/components/WhatsAppPreviewDialog.tsx",
-    "frontend/src/lib/whatsapp.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/EditStudentDialog.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useStudents.ts",
     "frontend/src/pages/AttendancePage.tsx",
     "frontend/src/pages/StudentListPage.tsx",
     "project_state.json",

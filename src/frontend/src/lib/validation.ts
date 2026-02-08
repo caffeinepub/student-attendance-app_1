@@ -20,11 +20,6 @@ export function validateStudentForm(
 
   if (!parentMobile.trim()) {
     errors.parentMobile = 'Parent mobile number is required';
-  } else {
-    const cleaned = parentMobile.replace(/\D/g, '');
-    if (cleaned.length < 10) {
-      errors.parentMobile = 'Please enter a valid mobile number';
-    }
   }
 
   return {

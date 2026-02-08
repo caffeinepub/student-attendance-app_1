@@ -1,3 +1,9 @@
+/**
+ * LEGACY: This module is deprecated and no longer the source of truth.
+ * Student data is now stored in the canister backend.
+ * Use hooks from useStudents.ts instead.
+ */
+
 import { Student } from './types';
 import { getFromLocalStorage, saveToLocalStorage } from './localStore';
 

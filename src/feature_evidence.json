@@ -2,31 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-final-confirmation-preview-ui-that-appears-immediately-before-opening-whatsapp-for-a-single-student-from-the-attendance-row-whatsapp-action-showing-the-exact-message-text-and-the-destination-phone-number-with-explicit-actions-to-cancel-or-proceed-to-open-whatsapp",
-      "featureTitle": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for a single student from the attendance row WhatsApp action, showing the exact message text and the destination phone number, with explicit actions to cancel or proceed to open WhatsApp.",
+      "featureId": "feature-update-the-add-student-flow-so-that-student-ids-are-generated-in-a-globally-unique-way-not-based-on-the-count-within-the-currently-selected-class-section",
+      "featureTitle": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
       "files": [
-        "frontend/src/components/StudentAttendanceRow.tsx",
-        "frontend/src/components/WhatsAppPreviewDialog.tsx",
-        "frontend/src/pages/AttendancePage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-final-confirmation-preview-ui-that-appears-immediately-before-opening-whatsapp-for-the-message-all-bulk-whatsapp-action-on-both-the-student-list-page-and-the-attendance-page-showing-the-exact-final-message-text-that-will-be-sent-and-the-target-wa-me-number-being-used",
-      "featureTitle": "Add a final confirmation/preview UI that appears immediately before opening WhatsApp for the “Message All” bulk WhatsApp action on both the Student List page and the Attendance page, showing the exact final message text that will be sent and the target wa.me number being used.",
-      "files": [
-        "frontend/src/components/WhatsAppPreviewDialog.tsx",
-        "frontend/src/pages/AttendancePage.tsx",
+        "frontend/src/hooks/useStudents.ts",
         "frontend/src/pages/StudentListPage.tsx"
       ],
       "components": [
@@ -34,20 +13,19 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-refactor-whatsapp-message-link-generation-utilities-as-needed-so-the-preview-uis-can-display-the-exact-final-message-text-that-will-be-used-for-both-single-recipient-and-bulk-wa-me-links-without-duplicating-message-building-logic-across-pages-components",
-      "featureTitle": "Refactor WhatsApp message/link generation utilities as needed so the preview UIs can display the exact final message text that will be used for both single-recipient and bulk wa.me links, without duplicating message-building logic across pages/components.",
+      "featureId": "feature-add-a-safe-recovery-diagnostic-path-in-the-ui-for-when-the-current-class-section-shows-no-students-helping-confirm-whether-data-exists-in-the-backend-e-g-by-optionally-loading-a-count-of-all-students-and-showing-a-clear-english-error-state-message-when-unauthorized-or-when-data-is-genuinely-empty",
+      "featureTitle": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
       "files": [
-        "frontend/src/components/StudentAttendanceRow.tsx",
-        "frontend/src/lib/whatsapp.ts",
-        "frontend/src/pages/AttendancePage.tsx",
+        "frontend/src/hooks/useStudents.ts",
         "frontend/src/pages/StudentListPage.tsx"
       ],
       "components": [
@@ -55,10 +33,11 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-7"
+        "REQ-4"
       ],
       "confidence": "high"
     }

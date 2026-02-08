@@ -1,3 +1,9 @@
+/**
+ * LEGACY: This module is deprecated and no longer the source of truth.
+ * Attendance data is now stored in the canister backend.
+ * Use hooks from useRollCall.ts instead.
+ */
+
 import { AttendanceStatus } from './types';
 import { getFromLocalStorage, saveToLocalStorage } from './localStore';
 

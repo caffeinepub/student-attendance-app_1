@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { CLASSES, SECTIONS } from '../constants/school';
+import { CLASSES, SECTIONS, getClassDisplayName } from '../constants/school';
 import { useAttendanceSession } from '../state/attendanceSession';
 
 export default function ClassSelectionPage() {
@@ -51,7 +51,7 @@ export default function ClassSelectionPage() {
               <SelectContent>
                 {CLASSES.map((cls) => (
                   <SelectItem key={cls} value={cls}>
-                    Class {cls}
+                    {getClassDisplayName(cls)}
                   </SelectItem>
                 ))}
               </SelectContent>
