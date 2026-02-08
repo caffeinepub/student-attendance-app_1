@@ -2,102 +2,167 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, Calendar, Users } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import { useAttendanceSession } from '../state/attendanceSession';
 import { useGetClassSectionStudents } from '../hooks/useStudents';
-import { useSaveRollCallForDay, useGetRollCallForDay } from '../hooks/useRollCall';
+import { useGetRollCallForDay, useSaveRollCallForDay } from '../hooks/useRollCall';
+import { AttendanceStatus, Student } from '../lib/types';
 import StudentAttendanceRow from '../components/StudentAttendanceRow';
-import { getTodayString, formatDateDisplay, getDayOfWeek, formatDateForTemplate } from '../lib/date';
+import { formatDateDisplay } from '../lib/date';
 import { getClassDisplayName } from '../constants/school';
-import { StoredStudent } from '../backend';
-import { AttendanceStatus } from '../lib/types';
-import { buildSingleWhatsAppPayload } from '../lib/whatsapp';
+import { useAuth, getAuthErrorMessage } from '../hooks/useAuth';
 import { renderStudentMessage } from '../lib/whatsappTemplate';
+import { buildSingleWhatsAppPayload } from '../lib/whatsapp';
+import { getTodayString, getDayOfWeek, formatDateForTemplate } from '../lib/date';
 
 export default function AttendancePage() {
   const navigate = useNavigate();
   const { selectedClass, selectedSection, selectedDate } = useAttendanceSession();
-  const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
-  const [hasChanges, setHasChanges] = useState(false);
+  const { isAuthenticated, isAuthorized } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const { data: students = [], isLoading } = useGetClassSectionStudents(
+  const { data: students = [], isLoading: studentsLoading, error: studentsError } = useGetClassSectionStudents(
     selectedClass || '',
     selectedSection || ''
   );
-  const { data: existingRollCall } = useGetRollCallForDay(
-    selectedDate || getTodayString(),
+
+  const { data: savedAttendance = {}, isLoading: attendanceLoading } = useGetRollCallForDay(
+    selectedDate || '',
     selectedClass || '',
     selectedSection || ''
   );
+
+  const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
   const saveRollCallMutation = useSaveRollCallForDay();
 
   useEffect(() => {
-    if (!selectedClass || !selectedSection) {
+    if (!selectedClass || !selectedSection || !selectedDate) {
       navigate({ to: '/class-selection' });
       return;
     }
-  }, [selectedClass, selectedSection, navigate]);
+  }, [selectedClass, selectedSection, selectedDate, navigate]);
 
   useEffect(() => {
-    if (existingRollCall && students.length > 0) {
-      setAttendance(existingRollCall);
+    if (savedAttendance && Object.keys(savedAttendance).length > 0) {
+      setAttendance(savedAttendance);
     }
-  }, [existingRollCall, students]);
+  }, [savedAttendance]);
 
-  const handleAttendanceChange = (studentId: string, status: AttendanceStatus) => {
-    setAttendance((prev) => ({
+  useEffect(() => {
+    if (studentsError) {
+      setErrorMessage(getAuthErrorMessage(studentsError));
+    }
+  }, [studentsError]);
+
+  const handleAttendanceChange = (studentId: string) => (status: AttendanceStatus) => {
+    setAttendance(prev => ({
       ...prev,
       [studentId]: status,
     }));
-    setHasChanges(true);
   };
 
   const handleSave = async () => {
-    if (!selectedClass || !selectedSection || !selectedDate) return;
-
-    await saveRollCallMutation.mutateAsync({
-      date: selectedDate,
-      className: selectedClass,
-      section: selectedSection,
-      attendance,
-    });
-
-    setHasChanges(false);
-  };
-
-  const handleContinue = async () => {
-    if (hasChanges) {
-      await handleSave();
+    if (!isAuthenticated) {
+      setErrorMessage('Please log in to save attendance.');
+      return;
     }
-    navigate({ to: '/summary' });
+    if (!isAuthorized) {
+      setErrorMessage('You are not authorized to save attendance.');
+      return;
+    }
+    if (!selectedDate || !selectedClass || !selectedSection) {
+      setErrorMessage('Missing required information.');
+      return;
+    }
+
+    try {
+      await saveRollCallMutation.mutateAsync({
+        date: selectedDate,
+        className: selectedClass,
+        section: selectedSection,
+        attendance,
+      });
+      setErrorMessage('');
+      navigate({ to: '/summary' });
+    } catch (err) {
+      setErrorMessage(getAuthErrorMessage(err));
+    }
   };
 
-  const handleWhatsAppClick = (student: StoredStudent) => {
-    const status = attendance[student.id.toString()];
-    if (!status || !selectedClass || !selectedSection || !selectedDate) return;
+  const handleWhatsAppMessage = (studentId: string, studentName: string, parentMobile: string) => () => {
+    const status = attendance[studentId];
+    if (!status) return;
 
-    const day = getDayOfWeek(selectedDate);
-    const formattedDate = formatDateForTemplate(selectedDate);
+    const today = selectedDate || getTodayString();
+    const day = getDayOfWeek(today);
+    const formattedDate = formatDateForTemplate(today);
 
     const messageText = renderStudentMessage(
-      student.student.fullName,
-      selectedClass,
-      selectedSection,
+      studentName,
+      selectedClass || '',
+      selectedSection || '',
       formattedDate,
       day,
       status
     );
 
     const payload = buildSingleWhatsAppPayload(
-      student.student.parentMobileNumber,
-      messageText,
-      student.student.fullName
+      parentMobile,
+      messageText
     );
-    window.open(payload.waUrl, '_blank');
+
+    if (payload.waUrl) {
+      window.open(payload.waUrl, '_blank');
+    }
   };
 
   const classDisplayName = selectedClass ? getClassDisplayName(selectedClass) : '';
-  const dateDisplay = selectedDate ? formatDateDisplay(selectedDate) : '';
+
+  // Prepare date and day for StudentAttendanceRow
+  const today = selectedDate || getTodayString();
+  const day = getDayOfWeek(today);
+  const formattedDate = formatDateForTemplate(today);
+
+  if (studentsLoading || attendanceLoading) {
+    return (
+      <div className="space-y-6 py-8">
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-lg">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Please log in to mark attendance.</AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate({ to: '/' })}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="space-y-6 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>You are not authorized to mark attendance.</AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate({ to: '/' })}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 py-8">
@@ -110,75 +175,86 @@ export default function AttendancePage() {
         Back
       </Button>
 
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
       <Card className="shadow-lg">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Mark Attendance</CardTitle>
-              <CardDescription>
-                {classDisplayName} - Section {selectedSection}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              <span>{dateDisplay}</span>
-            </div>
-          </div>
+          <CardTitle className="text-2xl">Mark Attendance</CardTitle>
+          <CardDescription>
+            {classDisplayName} - Section {selectedSection} | {formatDateDisplay(selectedDate || '')}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? (
+          {students.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">Loading students...</p>
-            </div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No students found</p>
-              <p className="text-sm">Add students to start marking attendance</p>
+              <p className="text-lg">No students found in this class.</p>
+              <Button
+                onClick={() => navigate({ to: '/student-list' })}
+                className="mt-4"
+              >
+                Go to Student List
+              </Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {students.map((storedStudent: StoredStudent) => (
-                <StudentAttendanceRow
-                  key={storedStudent.id.toString()}
-                  student={{
-                    id: storedStudent.id.toString(),
+            <>
+              <div className="space-y-3">
+                {students.map((storedStudent) => {
+                  const studentId = storedStudent.id.toString();
+                  const legacyStudent: Student = {
+                    id: studentId,
                     name: storedStudent.student.fullName,
                     rollNumber: storedStudent.student.rollNumber.toString(),
                     parentMobile: storedStudent.student.parentMobileNumber,
-                  }}
-                  status={attendance[storedStudent.id.toString()]}
-                  onStatusChange={(status) =>
-                    handleAttendanceChange(storedStudent.id.toString(), status)
-                  }
-                  onWhatsAppClick={() => handleWhatsAppClick(storedStudent)}
-                  classValue={selectedClass || ''}
-                  section={selectedSection || ''}
-                  date={selectedDate || getTodayString()}
-                  day={getDayOfWeek(selectedDate || getTodayString())}
-                />
-              ))}
-            </div>
+                  };
+
+                  return (
+                    <StudentAttendanceRow
+                      key={studentId}
+                      student={legacyStudent}
+                      status={attendance[studentId]}
+                      onStatusChange={handleAttendanceChange(studentId)}
+                      onWhatsAppClick={handleWhatsAppMessage(
+                        studentId,
+                        storedStudent.student.fullName,
+                        storedStudent.student.parentMobileNumber
+                      )}
+                      classValue={selectedClass || ''}
+                      section={selectedSection || ''}
+                      date={formattedDate}
+                      day={day}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  onClick={handleSave}
+                  disabled={saveRollCallMutation.isPending}
+                  size="lg"
+                  className="flex-1"
+                >
+                  <Save className="w-5 h-5 mr-2" />
+                  {saveRollCallMutation.isPending ? 'Saving...' : 'Save Attendance'}
+                </Button>
+                <Button
+                  onClick={() => navigate({ to: '/summary' })}
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                >
+                  View Summary
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
-
-      {students.length > 0 && (
-        <div className="flex justify-between">
-          <Button
-            onClick={handleSave}
-            variant="outline"
-            size="lg"
-            disabled={!hasChanges || saveRollCallMutation.isPending}
-          >
-            {saveRollCallMutation.isPending ? 'Saving...' : 'Save Progress'}
-          </Button>
-          <Button onClick={handleContinue} size="lg" className="gap-2">
-            Continue to Summary
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

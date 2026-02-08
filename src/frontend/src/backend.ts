@@ -93,6 +93,13 @@ export interface StoredStudent {
     id: bigint;
     student: Student;
 }
+export interface DailyRollCall {
+    wasPresent: Array<boolean>;
+    date: string;
+    section: string;
+    className: string;
+    studentRecords: Array<bigint>;
+}
 export interface UserProfile {
     name: string;
     role: string;
@@ -121,13 +128,20 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getClassSectionStudents(className: string, section: string): Promise<Array<[bigint, Student]>>;
+    getDailyRollCall(year: bigint, month: string, day: bigint, arg3: string, arg4: string): Promise<DailyRollCall | null>;
+    getMonthlyClassSectionRollCall(_year: bigint, _month: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>>;
+    getMonthlyRollCall(year: bigint, month: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>>;
     getStudent(id: bigint): Promise<Student | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    /**
+     * / Roll Call Management Functions
+     */
+    submitRollCall(year: bigint, month: string, day: bigint, section: string, className: string, studentRecords: Array<bigint>, wasPresent: Array<boolean>): Promise<void>;
     updateStudent(id: bigint, student: Student): Promise<void>;
 }
-import type { Student as _Student, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { DailyRollCall as _DailyRollCall, Student as _Student, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -242,18 +256,60 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getStudent(arg0: bigint): Promise<Student | null> {
+    async getDailyRollCall(arg0: bigint, arg1: string, arg2: bigint, arg3: string, arg4: string): Promise<DailyRollCall | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getStudent(arg0);
+                const result = await this.actor.getDailyRollCall(arg0, arg1, arg2, arg3, arg4);
                 return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getStudent(arg0);
+            const result = await this.actor.getDailyRollCall(arg0, arg1, arg2, arg3, arg4);
             return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMonthlyClassSectionRollCall(arg0: bigint, arg1: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMonthlyClassSectionRollCall(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMonthlyClassSectionRollCall(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async getMonthlyRollCall(arg0: bigint, arg1: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMonthlyRollCall(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMonthlyRollCall(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async getStudent(arg0: bigint): Promise<Student | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getStudent(arg0);
+                return from_candid_opt_n7(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getStudent(arg0);
+            return from_candid_opt_n7(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
@@ -298,6 +354,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async submitRollCall(arg0: bigint, arg1: string, arg2: bigint, arg3: string, arg4: string, arg5: Array<bigint>, arg6: Array<boolean>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitRollCall(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitRollCall(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+            return result;
+        }
+    }
     async updateStudent(arg0: bigint, arg1: Student): Promise<void> {
         if (this.processError) {
             try {
@@ -319,7 +389,10 @@ function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Ui
 function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Student]): Student | null {
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_DailyRollCall]): DailyRollCall | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Student]): Student | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

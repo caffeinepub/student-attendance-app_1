@@ -1,12 +1,12 @@
-import Principal "mo:core/Principal";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Array "mo:core/Array";
-import Iter "mo:core/Iter";
 import Text "mo:core/Text";
+import Iter "mo:core/Iter";
+import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Runtime "mo:core/Runtime";
 import Migration "migration";
 
 (with migration = Migration.run)
@@ -30,6 +30,30 @@ actor {
     className : Text;
     studentRecords : [Nat];
     wasPresent : [Bool];
+  };
+
+  public type RollCallRecord = {
+    className : Text;
+    section : Text;
+    students : [Nat];
+    attendance : [Bool];
+  };
+
+  public type RollCallDay = {
+    year : Nat;
+    month : Text;
+    day : Nat;
+    records : [RollCallRecord];
+  };
+
+  public type RollCallMonth = {
+    year : Nat;
+    month : Text;
+    days : [RollCallDay];
+  };
+
+  public type RollCallPersistence = {
+    months : [RollCallMonth];
   };
 
   public type UserProfile = {
@@ -146,5 +170,58 @@ actor {
     for ((_, section) in entries.values()) {
       section.remove(id);
     };
+  };
+
+  /// Roll Call Management Functions
+
+  public shared ({ caller }) func submitRollCall(year : Nat, month : Text, day : Nat, section : Text, className : Text, studentRecords : [Nat], wasPresent : [Bool]) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can submit roll calls");
+    };
+
+    let date = year.toText() # "-" # month # "-" # day.toText();
+    let dailyRollCall : DailyRollCall = {
+      date;
+      section;
+      className;
+      studentRecords;
+      wasPresent;
+    };
+    rollCalls.add(date, dailyRollCall);
+  };
+
+  public query ({ caller }) func getDailyRollCall(year : Nat, month : Text, day : Nat, _ : Text, _ : Text) : async ?DailyRollCall {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view roll call data");
+    };
+    let date = year.toText() # "-" # month # "-" # day.toText();
+    rollCalls.get(date);
+  };
+
+  public query ({ caller }) func getMonthlyRollCall(year : Nat, month : Text, _ : Text, _ : Text) : async [DailyRollCall] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view roll call data");
+    };
+
+    let entries = rollCalls.entries().toArray();
+
+    let filtered = entries.filter(
+      func((date, _)) {
+        let components = date.split(#char '-').toArray();
+        components.size() >= 3 and
+        components[0] == year.toText() and
+        components[1] == month
+      }
+    );
+
+    filtered.map(func((_, rollCall)) { rollCall });
+  };
+
+  public query ({ caller }) func getMonthlyClassSectionRollCall(_year : Nat, _month : Text, _ : Text, _ : Text) : async [DailyRollCall] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view roll call data");
+    };
+    let entries = rollCalls.entries().toArray();
+    entries.map(func((_, rollCall)) { rollCall });
   };
 };

@@ -5,8 +5,8 @@
   "frontend/src/pages/HomePage.tsx": "Home screen with app title, graduation cap icon, and \"Start Attendance\" button navigating to class selection.",
   "frontend/src/pages/ClassSelectionPage.tsx": "Class and section selection screen updated to display Nursery/LKG/UKG correctly using getClassDisplayName helper.",
   "frontend/src/pages/StudentListPage.tsx": "Student list page with enhanced empty-state UI, diagnostic feature to check total students in the system, and WhatsApp preview dialog without the non-existent isBulk prop.",
-  "frontend/src/pages/AttendancePage.tsx": "Attendance marking page that loads students using StoredStudent type, manages attendance state with proper hook names, and handles WhatsApp messaging using renderStudentMessage and buildSingleWhatsAppPayload with correct parameter types.",
-  "frontend/src/pages/SummaryPage.tsx": "Summary page migrated to load attendance from canister backend and compute statistics from roll call data with proper class display formatting.",
+  "frontend/src/pages/AttendancePage.tsx": "Attendance marking page that loads students and roll call data from backend, manages attendance state with curried callbacks for StudentAttendanceRow compatibility, saves to backend via submitRollCall, and handles WhatsApp messaging with proper authorization and type conversions between StoredStudent and legacy Student format.",
+  "frontend/src/pages/SummaryPage.tsx": "Summary page displaying daily attendance statistics with monthly CSV export panel including year/month inputs and download button with proper authorization checks.",
   "frontend/src/components/AddStudentDialog.tsx": "Add student dialog with three simple fields (Student Name, Roll Number, Parent Mobile Number) that saves to the backend using the current class/section context with proper auth gating and validation.",
   "frontend/src/components/StudentAttendanceRow.tsx": "Attendance row component displaying student name and roll number from stored data with Present/Absent buttons and WhatsApp integration via callback.",
   "frontend/src/constants/school.ts": "Defines class and section constants with Nursery, LKG, UKG added before classes 1-10, and provides getClassDisplayName helper to format class names correctly.",
@@ -27,8 +27,11 @@
   "frontend/src/hooks/useAuth.ts": "Provides authentication and authorization state using Internet Identity, including isAuthenticated, isAuthorized, userRole, and helper to format authorization error messages.",
   "frontend/src/hooks/useUserProfile.ts": "React Query hooks for reading and saving caller user profile from the canister backend.",
   "frontend/src/hooks/useStudents.ts": "React Query hooks for student operations that correctly use backend-generated IDs, convert tuple responses to StoredStudent format, and include a new useGetAllStudents hook for diagnostics.",
-  "frontend/src/hooks/useRollCall.ts": "React Query hooks for attendance roll call operations using temporary localStorage implementation until backend methods (getRollCallForDay, saveRollCallForDay) are added to the canister.",
+  "frontend/src/hooks/useRollCall.ts": "React Query hooks for attendance roll call operations using backend methods (getDailyRollCall, submitRollCall, getMonthlyClassSectionRollCall) with proper date parsing and data transformation between UI and backend formats.",
   "frontend/src/components/LoginButton.tsx": "Login/logout button component using Internet Identity with proper loading states and query cache clearing on logout.",
   "frontend/src/components/ProfileSetupDialog.tsx": "Modal dialog that prompts authenticated users without a profile to enter their name, saving via canister backend.",
-  "frontend/src/components/EditStudentDialog.tsx": "Edit student dialog updated to work with StoredStudent type containing separate id and student fields."
+  "frontend/src/components/EditStudentDialog.tsx": "Edit student dialog updated to work with StoredStudent type containing separate id and student fields.",
+  "frontend/src/lib/csv.ts": "CSV utility functions for generating Excel-compatible CSV files with proper field escaping, BOM for UTF-8 support, and browser download functionality.",
+  "frontend/src/lib/attendanceExport.ts": "Monthly attendance export helpers that transform student and roll call data into CSV format with one row per student, day columns, and attendance statistics.",
+  "frontend/src/hooks/useMonthlyExport.ts": "Export orchestration hook and function for generating and downloading monthly attendance CSV files with proper error handling."
 }

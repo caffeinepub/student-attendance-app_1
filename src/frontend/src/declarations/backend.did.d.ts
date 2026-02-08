@@ -10,6 +10,13 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface DailyRollCall {
+  'wasPresent' : Array<boolean>,
+  'date' : string,
+  'section' : string,
+  'className' : string,
+  'studentRecords' : Array<bigint>,
+}
 export interface StoredStudent { 'id' : bigint, 'student' : Student }
 export interface Student {
   'fullName' : string,
@@ -37,10 +44,29 @@ export interface _SERVICE {
     [string, string],
     Array<[bigint, Student]>
   >,
+  'getDailyRollCall' : ActorMethod<
+    [bigint, string, bigint, string, string],
+    [] | [DailyRollCall]
+  >,
+  'getMonthlyClassSectionRollCall' : ActorMethod<
+    [bigint, string, string, string],
+    Array<DailyRollCall>
+  >,
+  'getMonthlyRollCall' : ActorMethod<
+    [bigint, string, string, string],
+    Array<DailyRollCall>
+  >,
   'getStudent' : ActorMethod<[bigint], [] | [Student]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  /**
+   * / Roll Call Management Functions
+   */
+  'submitRollCall' : ActorMethod<
+    [bigint, string, bigint, string, string, Array<bigint>, Array<boolean>],
+    undefined
+  >,
   'updateStudent' : ActorMethod<[bigint, Student], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

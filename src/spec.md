@@ -1,12 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Stop student records from disappearing across classes/sections by fixing backend storage keying and making student IDs globally unique and upgrade-safe, with a clearer empty-state/diagnostic path in the UI.
+**Goal:** Ensure Class 8/9 students reliably appear across the app, make student/attendance data persist across canister upgrades, and enable monthly attendance export as an Excel-compatible CSV.
 
 **Planned changes:**
-- Update backend storage so student records are keyed in a way that cannot collide across classes/sections, preventing overwrites when adding students in multiple classes.
-- Change the add-student flow to generate globally unique student IDs (not derived from per-class/section counts) and ensure the backend safely rejects/handles any overwrite-risk updates.
-- Persist student records and any needed ID/index state across canister upgrades so data and ID generation do not reset after redeploy/upgrade.
-- Add a UI recovery/diagnostic empty-state for Student List that distinguishes (in English) between unauthorized/not logged in, loading error, and genuinely empty; optionally allow checking whether any students exist in the backend without exposing private data to unauthorized users.
+- Fix backend student lookup so Class 8 and Class 9 (any section) return existing students (matching Class 7 behavior) across Student List and Attendance screens.
+- Persist student storage through canister upgrades, restoring any indexes/counters so IDs and class/section lookups continue working after redeploy.
+- Add backend APIs to save and fetch daily roll-call data, and query roll calls for a given month/class/section.
+- Update frontend roll-call hooks/screens to use backend-stored attendance (replacing localStorage) so data remains after refresh and across devices.
+- Add a Monthly Export UI to download attendance as an Excel-compatible .csv with English headers, using the selected month (and year if needed) and the current class/section; show a clear English error if not authorized.
 
-**User-visible outcome:** Users can add students in Class 7/8/9 (and other sections) without students disappearing or overwriting each other, students remain after upgrades, and the Student List provides clear empty/error states with a way to confirm whether data exists.
+**User-visible outcome:** Selecting Class 8/9 shows existing students without re-adding them; attendance entries are saved to the backend and survive refresh/upgrade; users can export monthly attendance to an Excel-opening CSV from the app.

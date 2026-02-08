@@ -1,54 +1,67 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T16:31:09.150Z",
+  "generatedAt": "2026-02-08T21:29:19.325Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 5,
     "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Prevent students from disappearing when users add students in multiple classes/sections by eliminating ID collisions in the backend storage keying strategy.",
+        "summary": "Fix the backend student lookup so that selecting Class 8 or Class 9 (any section) returns the already-existing students (same behavior as Class 7) instead of appearing empty and prompting users to add students.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useStudents.ts",
-          "frontend/src/components/AddStudentDialog.tsx",
-          "frontend/src/pages/StudentListPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useStudents.ts",
-          "frontend/src/pages/StudentListPage.tsx"
-        ]
+        "summary": "Make student storage resilient to canister upgrades so previously added students do not disappear after redeploy/upgrade; ensure any needed indexes/counters are restored correctly on upgrade.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+        "summary": "Implement backend roll-call persistence APIs so attendance is stored in the canister (not only in browser localStorage), and can be queried for a given day and for a given month/class/section.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-4",
-        "summary": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
+        "summary": "Add a Monthly Export feature that lets the user download monthly student attendance data as an Excel-compatible CSV file (English headers), with month selection and class/section taken from the current session.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useStudents.ts",
-          "frontend/src/pages/StudentListPage.tsx"
+          "frontend/src/pages/SummaryPage.tsx",
+          "frontend/src/lib/csv.ts",
+          "frontend/src/lib/attendanceExport.ts",
+          "frontend/src/hooks/useMonthlyExport.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useStudents.ts",
-          "frontend/src/pages/StudentListPage.tsx"
+          "frontend/src/pages/SummaryPage.tsx",
+          "frontend/src/lib/csv.ts",
+          "frontend/src/lib/attendanceExport.ts",
+          "frontend/src/hooks/useMonthlyExport.ts"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Update the roll-call frontend hooks to use the new backend roll-call APIs (instead of the temporary localStorage implementation) so attendance data and monthly export are consistent across devices/browsers.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useRollCall.ts",
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/SummaryPage.tsx",
+          "frontend/src/lib/rollCallMapping.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useRollCall.ts",
+          "frontend/src/pages/AttendancePage.tsx",
+          "frontend/src/pages/SummaryPage.tsx"
         ]
       }
     ]
@@ -62,12 +75,14 @@
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/EditStudentDialog.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useStudents.ts",
+    "frontend/src/hooks/useMonthlyExport.ts",
+    "frontend/src/hooks/useRollCall.ts",
+    "frontend/src/lib/attendanceExport.ts",
+    "frontend/src/lib/csv.ts",
     "frontend/src/pages/AttendancePage.tsx",
-    "frontend/src/pages/StudentListPage.tsx",
+    "frontend/src/pages/SummaryPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

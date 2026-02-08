@@ -1,51 +1,67 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix student ID collisions UX + add empty-list diagnostics",
+  "title": "Monthly attendance CSV export + backend-backed roll-call hooks",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Stop generating student IDs on the client; rely on backend to generate globally unique IDs while keeping add-student UX unchanged.",
+      "id": "REQ-4",
+      "summary": "Add a Monthly Export UI that downloads Excel-compatible monthly attendance CSV for the currently selected class/section.",
       "acceptanceCriteria": [
-        "Creating a student in an empty class/section after adding students elsewhere still produces a unique ID that does not conflict with existing students.",
-        "No class/section uses duplicated IDs that cause another class/section’s student to disappear.",
-        "User-facing behavior remains the same: user enters Student Name, Roll Number, and Parent Mobile Number and the student appears in the current class/section list."
+        "From the app UI, the user can choose a month (and year if needed) and download a .csv file that opens correctly in Excel.",
+        "The exported CSV contains one row per student (or a clearly documented alternative, e.g., one row per student per day), and includes class, section, student name, roll number, and attendance values for the month.",
+        "If the user is not logged in/authorized, the export shows a clear English error message instead of downloading an empty or corrupt file."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useStudents.ts",
+          "path": "frontend/src/pages/SummaryPage.tsx",
           "operation": "modify",
-          "description": "Remove client-side ID generation logic from the add-student mutation and call the backend capability that generates a globally unique ID (use the typed backend interface methods). Update student fetching hook(s) to correctly adapt backend return shapes so list items retain stable IDs. Verify the component's usage instructions before implementing."
+          "description": "Add a Monthly Export panel (month/year input and Download CSV button) that uses the current AttendanceSession class/section and shows clear English authorization/errors. Use existing shadcn-ui primitives (e.g., Button/Card/Input/Alert) for consistent styling—verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/AddStudentDialog.tsx",
-          "operation": "modify",
-          "description": "Keep the existing form fields/validation and update submission wiring (if needed) so it no longer depends on any locally computed student ID, while preserving current user-facing behavior and existing authorization messaging via the authorization system. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/lib/csv.ts",
+          "operation": "create",
+          "description": "Implement CSV utilities (safe escaping/quoting, building rows, and triggering a browser download via Blob) to generate an Excel-compatible .csv file."
         },
         {
-          "path": "frontend/src/pages/StudentListPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the student list renders correctly with IDs returned from backend-generated IDs (stable React keys, edit/delete wiring) after the add-student flow change. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/lib/attendanceExport.ts",
+          "operation": "create",
+          "description": "Create monthly attendance export helpers that transform (students + monthly roll-call data) into a CSV table format with English headers, including one row per student and day-of-month columns."
+        },
+        {
+          "path": "frontend/src/hooks/useMonthlyExport.ts",
+          "operation": "create",
+          "description": "Add a small hook to orchestrate monthly export data fetching (students + monthly roll calls) and expose a single action for the Summary screen to generate/download CSV, including readable English errors on unauthorized access."
         }
       ]
     },
     {
-      "id": "REQ-4",
-      "summary": "Add an empty-state recovery/diagnostic UI that clarifies why the student list is empty and optionally confirms whether any students exist in the backend.",
+      "id": "REQ-5",
+      "summary": "Replace temporary localStorage roll-call hooks with backend-backed roll-call queries/mutations so attendance and export share the same source of truth.",
       "acceptanceCriteria": [
-        "When the Student List is empty, the UI distinguishes (in English) between: not logged in/not authorized, loading error, and genuinely no students.",
-        "There is a way to confirm whether any students exist in the backend even if the selected class/section list is empty (without exposing private data to unauthorized users)."
+        "Marking attendance and viewing the Summary uses backend-stored data for the selected day.",
+        "Refreshing the browser does not lose saved attendance for that day/month.",
+        "Monthly export uses the same backend source of truth as the Attendance/Summary screens."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useStudents.ts",
+          "path": "frontend/src/hooks/useRollCall.ts",
           "operation": "modify",
-          "description": "Add a React Query hook that can load a safe diagnostic signal (e.g., total student count derived from getAllStudents) gated by authentication/authorization state so it is not invoked for guests/unauthorized users. Return only the minimal data needed for diagnostics in the UI. Verify the component's usage instructions before implementing."
+          "description": "Replace localStorage implementation with backend calls via the actor: load daily roll call with getDailyRollCall and persist with submitRollCall; add a monthly query hook using getMonthlyRollCall (or the available monthly method) returning data needed for export."
         },
         {
-          "path": "frontend/src/pages/StudentListPage.tsx",
+          "path": "frontend/src/pages/AttendancePage.tsx",
           "operation": "modify",
-          "description": "Enhance the empty student list UI to show distinct English states for: not logged in/not authorized (prompt to log in), loading error (show actionable error), and genuinely empty. Add an optional 'Check if any students exist' diagnostic action that triggers the gated diagnostic hook and displays a clear result without exposing private student details to unauthorized users. Verify the component's usage instructions before implementing."
+          "description": "Update AttendancePage to correctly map backend DailyRollCall data into the UI attendance record and to save using backend-backed useSaveRollCallForDay; ensure the saved payload aligns students to wasPresent flags deterministically."
+        },
+        {
+          "path": "frontend/src/pages/SummaryPage.tsx",
+          "operation": "modify",
+          "description": "Ensure SummaryPage calculations are based on backend roll-call data returned by the updated useGetRollCallForDay hook (no local-only behavior)."
+        },
+        {
+          "path": "frontend/src/lib/rollCallMapping.ts",
+          "operation": "create",
+          "description": "Add shared mapping helpers between UI attendance records and backend roll-call shapes (e.g., student ID list <-> wasPresent list) to keep Attendance and Export consistent."
         }
       ]
     }

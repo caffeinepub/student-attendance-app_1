@@ -1,88 +1,111 @@
 {
   "kind": "build_request",
-  "title": "Fix missing students across classes (ID collisions + persistence across upgrades)",
-  "priority": "high",
+  "title": "Fix missing Class 8/9 students across screens and add monthly attendance export to Excel (CSV)",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Prevent students from disappearing when users add students in multiple classes/sections by eliminating ID collisions in the backend storage keying strategy.",
+      "text": "Fix the backend student lookup so that selecting Class 8 or Class 9 (any section) returns the already-existing students (same behavior as Class 7) instead of appearing empty and prompting users to add students.",
       "target": "backend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Student sabhi gayab ho gaye hai\nMaine 9,8,7 class main student add kiya the vo sab gayab ho gaye hai",
-          "Fix build karo"
+          "8 और 9 के छात्र अभी भी नहीं आ रहे हैं जैसे ही क्लास और section select karte Hain to add Student ke liye kehta Hai",
+          "1 ha bilkul 7 ki tarah",
+          "2 student kahi nahi dikh rahe hai"
         ]
       },
       "acceptanceCriteria": [
-        "Adding students to Class 7, Class 8, and Class 9 does not overwrite previously added students in other classes/sections.",
-        "After adding students to multiple classes/sections, each class/section’s Student List shows the correct students when navigating between classes.",
-        "Backend rejects or safely handles any attempt to add/update a student record that would overwrite an unrelated existing student due to non-unique IDs."
+        "Given existing student records with className='8' or className='9', calling getClassSectionStudents('8','A') / getClassSectionStudents('9','A') returns those students instead of an empty list.",
+        "StudentListPage and AttendancePage show students for Class 8/9 after selecting class/section, without requiring re-adding students.",
+        "Fix does not break student retrieval for other classes/sections."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Fix build karo"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Creating a student in an empty class/section after adding students elsewhere still produces a unique ID that does not conflict with existing students.",
-        "No class/section uses duplicated IDs that cause another class/section’s student to disappear.",
-        "User-facing behavior remains the same: user enters Student Name, Roll Number, and Parent Mobile Number and the student appears in the current class/section list."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+      "text": "Make student storage resilient to canister upgrades so previously added students do not disappear after redeploy/upgrade; ensure any needed indexes/counters are restored correctly on upgrade.",
       "target": "backend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Fix build karo"
+          "8 और 9 के छात्र अभी भी नहीं आ रहे हैं",
+          "student kahi nahi dikh rahe hai"
         ]
       },
       "acceptanceCriteria": [
-        "After an upgrade, previously added students are still returned by the backend APIs and appear in the UI.",
-        "The backend’s ID generation continues correctly after an upgrade (no reset that could reintroduce ID collisions)."
+        "After a canister upgrade, previously added students remain retrievable via getAllStudents and getClassSectionStudents.",
+        "Any class/section indexing used for getClassSectionStudents continues to work correctly after upgrade without manual intervention.",
+        "The student ID counter continues from the prior maximum so newly added students do not overwrite or collide with existing IDs."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement backend roll-call persistence APIs so attendance is stored in the canister (not only in browser localStorage), and can be queried for a given day and for a given month/class/section.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "student monthly data Excel main download ho"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new backend method exists to save a daily roll call for a (date, className, section) and a method exists to fetch it back reliably.",
+        "A backend query exists to list roll calls for a month for a (className, section), returning enough data to generate a monthly export.",
+        "Saving attendance from the UI persists to the backend and remains available after page refresh (and after canister upgrade per REQ-2)."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
+      "text": "Add a Monthly Export feature that lets the user download monthly student attendance data as an Excel-compatible CSV file (English headers), with month selection and class/section taken from the current session.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Ismein vah student nahin dikh raha hai jo maine different classes mein add kiye the",
-          "Student sabhi gayab ho gaye hai"
+          "student monthly data Excel main download ho"
         ]
       },
       "acceptanceCriteria": [
-        "When the Student List is empty, the UI distinguishes (in English) between: not logged in/not authorized, loading error, and genuinely no students.",
-        "There is a way to confirm whether any students exist in the backend even if the selected class/section list is empty (without exposing private data to unauthorized users)."
+        "From the app UI, the user can choose a month (and year if needed) and download a .csv file that opens correctly in Excel.",
+        "The exported CSV contains one row per student (or a clearly documented alternative, e.g., one row per student per day), and includes class, section, student name, roll number, and attendance values for the month.",
+        "If the user is not logged in/authorized, the export shows a clear English error message instead of downloading an empty or corrupt file."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Update the roll-call frontend hooks to use the new backend roll-call APIs (instead of the temporary localStorage implementation) so attendance data and monthly export are consistent across devices/browsers.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "student monthly data Excel main download ho"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Marking attendance and viewing the Summary uses backend-stored data for the selected day.",
+        "Refreshing the browser does not lose saved attendance for that day/month.",
+        "Monthly export uses the same backend source of truth as the Attendance/Summary screens."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister (all logic in backend/main.mo).",
-    "Do not modify frontend files under frontend/src/components/ui, frontend/src/hooks/useInternetIdentity.ts/.tsx, frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (compose instead)."
+    "Backend must remain a single Motoko actor in backend/main.mo (single-actor architecture).",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Do not implement the monthly attendance download/export feature in this build (PDF/Excel/CSV).",
-    "Do not add third-party authentication providers; Internet Identity only."
+    "PDF export (only Excel-compatible CSV is required for this request).",
+    "Real-time syncing/multi-user live updates (no WebSockets).",
+    "Third-party auth providers other than Internet Identity."
   ],
   "imageRequirements": {
     "required": [],

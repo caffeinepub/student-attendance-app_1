@@ -1,68 +1,97 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T16:31:09.148Z",
-  "summary": "Backend now generates student IDs from a global counter and adds a class-section index map, and frontend adds an empty-state diagnostic path via fetching all students. However, upgrade persistence is not clearly implemented from the provided diff, backend overwrite-safety on update is missing, and several unrequested/forbidden frontend changes appear (including modifying frontend/src/main.tsx and adding unrelated WhatsApp/template/theme/class-list changes).",
+  "generatedAt": "2026-02-08T21:29:19.322Z",
+  "summary": "The diff adds frontend CSV export utilities and updates roll-call hooks/pages to call backend APIs, plus introduces a migration module and some backend type/state scaffolding. However, key backend requirements (Class 8/9 lookup fix, upgrade-safe stable persistence, and confirmed roll-call persistence/query APIs) are not clearly implemented in the provided diff summary, and the CSV export output is missing required class/section fields. Several unrelated UI/features and at least one constraint-violating change (editing frontend/src/main.tsx) appear in the diff summary.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Backend rejects or safely handles any attempt to add/update a student record that would overwrite an unrelated existing student due to non-unique IDs.",
-      "reason": "While addStudent now uses a global counter, updateStudent unconditionally overwrites the students map entry for the provided id with no validation that the id exists or belongs to the same class/section, and no safeguard against overwriting an unrelated record.",
+      "requirement": "Fix backend student lookup so Class 8/9 (any section) returns existing students via getClassSectionStudents, and Class 8/9 students show on StudentListPage and AttendancePage without re-adding.",
+      "reason": "backend/main.mo changes are truncated at getClassSectionStudents implementation; no explicit evidence shows the Class 8/9 lookup bug was fixed or that retrieval logic differs from prior behavior.",
       "evidence": [
-        "backend/main.mo (updateStudent: `students.add(id, student);`)"
+        "backend/main.mo (truncated at getClassSectionStudents)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Make student storage resilient to canister upgrades (restore indexes/counters and continue ID counter after upgrade).",
+      "reason": "A migration module is added, but there is no evidence of stable variables or preupgrade/postupgrade logic that actually persists/restores students, indexes, roll calls, or idCounter across upgrades; migration.run currently returns old unchanged (old;).",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo (shows '(with migration = Migration.run)' but no stable persistence shown)"
       ]
     },
     {
       "id": "REQ-3",
-      "requirement": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
-      "reason": "The diff shows new migration logic, but the provided backend/main.mo excerpt defines `students`, `classSectionStudents`, `rollCalls` as `let` and `idCounter` as a non-stable `var` initialized to 0, with no visible `stable` declarations or preupgrade/postupgrade hooks in the shown portion. Persistence across upgrades cannot be confirmed from the diff summary evidence.",
+      "requirement": "Implement backend roll-call persistence APIs to save daily roll call and query by day and by month/class/section, with persistence across refresh and upgrade.",
+      "reason": "Frontend calls actor.getDailyRollCall, actor.submitRollCall, and actor.getMonthlyClassSectionRollCall, but the diff summary does not show these methods implemented in backend/main.mo (file content is truncated and no method definitions are visible). Also no upgrade persistence is evidenced for rollCalls.",
       "evidence": [
-        "backend/main.mo (shows `let students = Map.empty...`, `var idCounter = 0;`)",
-        "backend/migration.mo (added migration module, but persistence wiring beyond `(with migration = Migration.run)` is not evidenced)"
+        "frontend/src/hooks/useRollCall.ts",
+        "backend/main.mo (truncated; roll-call methods not shown)",
+        "backend/migration.mo (no persistence logic; returns old state unchanged)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Monthly export CSV must include class and section along with student name, roll number, and attendance values for the month.",
+      "reason": "generateMonthlyAttendanceCsv builds headers/data with Roll No, Student Name, Parent Mobile, Day columns, totals and percent, but does not include class or section columns.",
+      "evidence": [
+        "frontend/src/lib/attendanceExport.ts"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Modified a forbidden frontend file (frontend/src/main.tsx), including removing/altering Internet Identity provider usage.",
-      "reason": "BuildRequest explicitly disallows modifying frontend/src/main.tsx and requires Internet Identity only; diff summary indicates main.tsx was changed and auth provider removed.",
+      "description": "Modified an immutable frontend path (frontend/src/main.tsx) despite the constraint to not edit it.",
+      "reason": "The diff summary states frontend/src/main.tsx was modified (and even describes removing InternetIdentityProvider), which violates the BuildRequest constraints.",
       "evidence": [
-        "frontend-file-summaries.txt (entry for `frontend/src/main.tsx`: \"removed InternetIdentityProvider as authentication is not required\")"
+        "frontend-file-summaries.txt (entry for \"frontend/src/main.tsx\")"
       ]
     },
     {
-      "description": "Added/changed WhatsApp template editor routing and related WhatsApp/template features beyond the requested student-ID/persistence/diagnostic fix.",
-      "reason": "Not requested in BuildRequest; appears as additional product functionality.",
+      "description": "Added/mentioned a new WhatsApp template editor route and related WhatsApp preview/dialog enhancements beyond requested monthly export and attendance persistence.",
+      "reason": "BuildRequest does not request any WhatsApp template editor route or WhatsApp preview features.",
       "evidence": [
-        "frontend-file-summaries.txt (entry for `frontend/src/App.tsx`: \"including the new WhatsApp template editor route\")",
-        "frontend-file-summaries.txt (entries for `frontend/src/lib/whatsapp.ts`, `frontend/src/lib/whatsappTemplate.ts` (truncated))"
+        "frontend-file-summaries.txt (\"frontend/src/App.tsx\" mentions new WhatsApp template editor route)",
+        "frontend-file-summaries.txt (\"frontend/src/pages/StudentListPage.tsx\" mentions WhatsApp preview dialog)",
+        "frontend-file-summaries.txt (\"frontend/src/lib/whatsapp.ts\" refactors WhatsApp utilities)"
       ]
     },
     {
-      "description": "Expanded/modified class constants to include Nursery/LKG/UKG and changed class display formatting.",
-      "reason": "Not part of the stated requirements; could be unrelated scope expansion.",
+      "description": "Added diagnostic feature on StudentListPage to check total students in the system.",
+      "reason": "Not requested; the request focuses on Class 8/9 lookup fix, upgrade resilience, backend attendance persistence, and CSV export.",
       "evidence": [
-        "frontend-file-summaries.txt (entry for `frontend/src/constants/school.ts`: \"Nursery, LKG, UKG added\")",
-        "frontend-file-summaries.txt (entry for `frontend/src/pages/ClassSelectionPage.tsx`: display updated for Nursery/LKG/UKG)"
+        "frontend-file-summaries.txt (\"frontend/src/pages/StudentListPage.tsx\" mentions diagnostic feature)"
       ]
     },
     {
-      "description": "Large UI/theme and styling system changes (OKLCH theme, Tailwind config changes).",
-      "reason": "Not requested; requirements focus on ID collisions, persistence, and diagnostic empty state messaging.",
+      "description": "Added Nursery/LKG/UKG class constants and updated class display behavior.",
+      "reason": "Not part of the BuildRequest requirements (which focus on Class 8/9 visibility and attendance export).",
       "evidence": [
-        "frontend-file-summaries.txt (entries for `frontend/src/index.css`, `frontend/tailwind.config.js`)"
+        "frontend-file-summaries.txt (\"frontend/src/constants/school.ts\")",
+        "frontend-file-summaries.txt (\"frontend/src/pages/ClassSelectionPage.tsx\")"
+      ]
+    },
+    {
+      "description": "Global styling/theme changes (OKLCH purple theme, tailwind config updates).",
+      "reason": "Not requested; unrelated to the functional requirements.",
+      "evidence": [
+        "frontend-file-summaries.txt (\"frontend/src/index.css\")",
+        "frontend-file-summaries.txt (\"frontend/tailwind.config.js\")"
       ]
     }
   ],
-  "confidence": 0.63,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/EditStudentDialog.tsx",
-    "frontend/src/hooks/useStudents.ts",
+    "frontend/src/hooks/useMonthlyExport.ts",
+    "frontend/src/hooks/useRollCall.ts",
+    "frontend/src/lib/attendanceExport.ts",
+    "frontend/src/lib/csv.ts",
     "frontend/src/pages/AttendancePage.tsx",
-    "frontend/src/pages/StudentListPage.tsx",
+    "frontend/src/pages/SummaryPage.tsx",
     "project_state.json"
   ]
 }

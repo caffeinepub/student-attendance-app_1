@@ -25,6 +25,13 @@ export const StoredStudent = IDL.Record({
   'student' : Student,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text, 'role' : IDL.Text });
+export const DailyRollCall = IDL.Record({
+  'wasPresent' : IDL.Vec(IDL.Bool),
+  'date' : IDL.Text,
+  'section' : IDL.Text,
+  'className' : IDL.Text,
+  'studentRecords' : IDL.Vec(IDL.Nat),
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -39,6 +46,21 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Tuple(IDL.Nat, Student))],
       ['query'],
     ),
+  'getDailyRollCall' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Nat, IDL.Text, IDL.Text],
+      [IDL.Opt(DailyRollCall)],
+      ['query'],
+    ),
+  'getMonthlyClassSectionRollCall' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Vec(DailyRollCall)],
+      ['query'],
+    ),
+  'getMonthlyRollCall' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Vec(DailyRollCall)],
+      ['query'],
+    ),
   'getStudent' : IDL.Func([IDL.Nat], [IDL.Opt(Student)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -47,6 +69,19 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'submitRollCall' : IDL.Func(
+      [
+        IDL.Nat,
+        IDL.Text,
+        IDL.Nat,
+        IDL.Text,
+        IDL.Text,
+        IDL.Vec(IDL.Nat),
+        IDL.Vec(IDL.Bool),
+      ],
+      [],
+      [],
+    ),
   'updateStudent' : IDL.Func([IDL.Nat, Student], [], []),
 });
 
@@ -67,6 +102,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const StoredStudent = IDL.Record({ 'id' : IDL.Nat, 'student' : Student });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'role' : IDL.Text });
+  const DailyRollCall = IDL.Record({
+    'wasPresent' : IDL.Vec(IDL.Bool),
+    'date' : IDL.Text,
+    'section' : IDL.Text,
+    'className' : IDL.Text,
+    'studentRecords' : IDL.Vec(IDL.Nat),
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -81,6 +123,21 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(IDL.Nat, Student))],
         ['query'],
       ),
+    'getDailyRollCall' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Nat, IDL.Text, IDL.Text],
+        [IDL.Opt(DailyRollCall)],
+        ['query'],
+      ),
+    'getMonthlyClassSectionRollCall' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Vec(DailyRollCall)],
+        ['query'],
+      ),
+    'getMonthlyRollCall' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Vec(DailyRollCall)],
+        ['query'],
+      ),
     'getStudent' : IDL.Func([IDL.Nat], [IDL.Opt(Student)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -89,6 +146,19 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'submitRollCall' : IDL.Func(
+        [
+          IDL.Nat,
+          IDL.Text,
+          IDL.Nat,
+          IDL.Text,
+          IDL.Text,
+          IDL.Vec(IDL.Nat),
+          IDL.Vec(IDL.Bool),
+        ],
+        [],
+        [],
+      ),
     'updateStudent' : IDL.Func([IDL.Nat, Student], [], []),
   });
 };

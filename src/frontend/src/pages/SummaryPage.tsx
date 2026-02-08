@@ -1,50 +1,105 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Home, CheckCircle2, XCircle, Calendar, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, CheckCircle, XCircle, Users, Download, AlertCircle } from 'lucide-react';
 import { useAttendanceSession } from '../state/attendanceSession';
-import { useGetRollCallForDay } from '../hooks/useRollCall';
+import { useGetClassSectionStudents } from '../hooks/useStudents';
+import { useGetRollCallForDay, useGetMonthlyRollCall } from '../hooks/useRollCall';
 import { formatDateDisplay } from '../lib/date';
 import { getClassDisplayName } from '../constants/school';
+import { useAuth, getAuthErrorMessage } from '../hooks/useAuth';
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { exportMonthlyAttendance } from '../hooks/useMonthlyExport';
 
 export default function SummaryPage() {
   const navigate = useNavigate();
   const { selectedClass, selectedSection, selectedDate } = useAttendanceSession();
-  const [summary, setSummary] = useState({ present: 0, absent: 0, total: 0 });
+  const { isAuthenticated, isAuthorized } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [exportYear, setExportYear] = useState<string>(new Date().getFullYear().toString());
+  const [exportMonth, setExportMonth] = useState<string>(String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [isExporting, setIsExporting] = useState(false);
 
-  const { data: rollCallData, isLoading } = useGetRollCallForDay(
+  const { data: students = [] } = useGetClassSectionStudents(
+    selectedClass || '',
+    selectedSection || ''
+  );
+
+  const { data: attendance = {}, error } = useGetRollCallForDay(
     selectedDate || '',
     selectedClass || '',
     selectedSection || ''
   );
 
-  useEffect(() => {
-    if (!selectedClass || !selectedSection || !selectedDate) {
-      navigate({ to: '/class-selection' });
+  const { data: monthlyRollCalls = [], refetch: refetchMonthly } = useGetMonthlyRollCall(
+    parseInt(exportYear) || new Date().getFullYear(),
+    exportMonth,
+    selectedClass || '',
+    selectedSection || ''
+  );
+
+  if (!selectedClass || !selectedSection || !selectedDate) {
+    navigate({ to: '/class-selection' });
+    return null;
+  }
+
+  if (error) {
+    const authError = getAuthErrorMessage(error);
+    return (
+      <div className="space-y-6 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{authError}</AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate({ to: '/attendance' })}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Attendance
+        </Button>
+      </div>
+    );
+  }
+
+  const presentCount = Object.values(attendance).filter(status => status === 'present').length;
+  const absentCount = Object.values(attendance).filter(status => status === 'absent').length;
+  const totalMarked = presentCount + absentCount;
+  const totalStudents = students.length;
+
+  const classDisplayName = getClassDisplayName(selectedClass);
+
+  const handleExportMonthly = async () => {
+    if (!isAuthenticated) {
+      setErrorMessage('Please log in to export attendance data.');
       return;
     }
-  }, [selectedClass, selectedSection, selectedDate, navigate]);
-
-  useEffect(() => {
-    if (rollCallData) {
-      let present = 0;
-      let absent = 0;
-      
-      Object.values(rollCallData).forEach(status => {
-        if (status === 'present') present++;
-        else if (status === 'absent') absent++;
-      });
-      
-      setSummary({
-        present,
-        absent,
-        total: present + absent,
-      });
+    if (!isAuthorized) {
+      setErrorMessage('You are not authorized to export attendance data.');
+      return;
     }
-  }, [rollCallData]);
 
-  const classDisplayName = selectedClass ? getClassDisplayName(selectedClass) : '';
+    setIsExporting(true);
+    setErrorMessage('');
+
+    try {
+      // Refetch to ensure we have latest data
+      const { data: latestRollCalls } = await refetchMonthly();
+      
+      await exportMonthlyAttendance(
+        parseInt(exportYear),
+        exportMonth,
+        selectedClass,
+        selectedSection,
+        students,
+        latestRollCalls || []
+      );
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to export attendance data');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6 py-8">
@@ -54,75 +109,155 @@ export default function SummaryPage() {
         className="mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
+        Back to Attendance
       </Button>
+
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Attendance Summary</CardTitle>
-          <CardDescription className="flex items-center gap-2 text-base">
-            <Calendar className="w-4 h-4" />
-            {formatDateDisplay(selectedDate || '')} • {classDisplayName} - Section {selectedSection}
+          <CardDescription>
+            {classDisplayName} - Section {selectedSection} | {formatDateDisplay(selectedDate)}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin" />
-              <p className="text-lg">Loading summary...</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-600 dark:text-green-400" />
-                    <p className="text-sm text-muted-foreground mb-1">Total Present</p>
-                    <p className="text-4xl font-bold text-green-600 dark:text-green-400">{summary.present}</p>
-                  </CardContent>
-                </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">Present</p>
+                    <p className="text-3xl font-bold text-green-700 dark:text-green-300">{presentCount}</p>
+                  </div>
+                  <CheckCircle className="w-12 h-12 text-green-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
 
-                <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900">
-                  <CardContent className="p-6 text-center">
-                    <XCircle className="w-12 h-12 mx-auto mb-3 text-red-600 dark:text-red-400" />
-                    <p className="text-sm text-muted-foreground mb-1">Total Absent</p>
-                    <p className="text-4xl font-bold text-red-600 dark:text-red-400">{summary.absent}</p>
-                  </CardContent>
-                </Card>
-              </div>
+            <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">Absent</p>
+                    <p className="text-3xl font-bold text-red-700 dark:text-red-300">{absentCount}</p>
+                  </div>
+                  <XCircle className="w-12 h-12 text-red-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-accent/5">
-                <CardContent className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Total Students</p>
-                  <p className="text-3xl font-bold">{summary.total}</p>
-                  {summary.total > 0 && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Attendance Rate: {Math.round((summary.present / summary.total) * 100)}%
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </>
+            <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Students</p>
+                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{totalStudents}</p>
+                  </div>
+                  <Users className="w-12 h-12 text-blue-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {totalMarked < totalStudents && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Attendance marked for {totalMarked} out of {totalStudents} students.
+                {totalMarked === 0 && ' No attendance has been marked yet.'}
+              </AlertDescription>
+            </Alert>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <Button
               onClick={() => navigate({ to: '/attendance' })}
-              variant="outline"
-              className="flex-1 h-12"
               size="lg"
+              className="flex-1"
             >
-              Edit Attendance
+              Mark Attendance
             </Button>
             <Button
               onClick={() => navigate({ to: '/' })}
-              className="flex-1 h-12"
+              variant="outline"
               size="lg"
+              className="flex-1"
             >
-              <Home className="w-5 h-5 mr-2" />
-              Home
+              Done
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Monthly Export Section */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl">Monthly Attendance Export</CardTitle>
+          <CardDescription>
+            Download attendance data for {classDisplayName} - Section {selectedSection} as Excel-compatible CSV
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="export-year">Year</Label>
+              <Input
+                id="export-year"
+                type="number"
+                min="2020"
+                max="2099"
+                value={exportYear}
+                onChange={(e) => setExportYear(e.target.value)}
+                placeholder="2026"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="export-month">Month</Label>
+              <Input
+                id="export-month"
+                type="text"
+                maxLength={2}
+                value={exportMonth}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
+                    setExportMonth(val.padStart(2, '0'));
+                  }
+                }}
+                placeholder="01-12"
+              />
+            </div>
+          </div>
+          
+          <Button
+            onClick={handleExportMonthly}
+            disabled={!isAuthenticated || !isAuthorized || isExporting || !exportYear || !exportMonth}
+            size="lg"
+            className="w-full"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            {isExporting ? 'Exporting...' : 'Download Monthly Attendance CSV'}
+          </Button>
+
+          {!isAuthenticated && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Please log in to export attendance data.</AlertDescription>
+            </Alert>
+          )}
+          
+          {isAuthenticated && !isAuthorized && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>You are not authorized to export attendance data.</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     </div>

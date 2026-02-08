@@ -2,31 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-add-student-flow-so-that-student-ids-are-generated-in-a-globally-unique-way-not-based-on-the-count-within-the-currently-selected-class-section",
-      "featureTitle": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
+      "featureId": "feature-add-a-monthly-export-feature-that-lets-the-user-download-monthly-student-attendance-data-as-an-excel-compatible-csv-file-english-headers-with-month-selection-and-class-section-taken-from-the-current-session",
+      "featureTitle": "Add a Monthly Export feature that lets the user download monthly student attendance data as an Excel-compatible CSV file (English headers), with month selection and class/section taken from the current session.",
       "files": [
-        "frontend/src/hooks/useStudents.ts",
-        "frontend/src/pages/StudentListPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-safe-recovery-diagnostic-path-in-the-ui-for-when-the-current-class-section-shows-no-students-helping-confirm-whether-data-exists-in-the-backend-e-g-by-optionally-loading-a-count-of-all-students-and-showing-a-clear-english-error-state-message-when-unauthorized-or-when-data-is-genuinely-empty",
-      "featureTitle": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
-      "files": [
-        "frontend/src/hooks/useStudents.ts",
-        "frontend/src/pages/StudentListPage.tsx"
+        "frontend/src/hooks/useMonthlyExport.ts",
+        "frontend/src/lib/attendanceExport.ts",
+        "frontend/src/lib/csv.ts",
+        "frontend/src/pages/SummaryPage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -38,6 +20,27 @@
       ],
       "testIds": [
         "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-roll-call-frontend-hooks-to-use-the-new-backend-roll-call-apis-instead-of-the-temporary-localstorage-implementation-so-attendance-data-and-monthly-export-are-consistent-across-devices-browsers",
+      "featureTitle": "Update the roll-call frontend hooks to use the new backend roll-call APIs (instead of the temporary localStorage implementation) so attendance data and monthly export are consistent across devices/browsers.",
+      "files": [
+        "frontend/src/hooks/useRollCall.ts",
+        "frontend/src/pages/AttendancePage.tsx",
+        "frontend/src/pages/SummaryPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
       ],
       "confidence": "high"
     }

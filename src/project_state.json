@@ -1,26 +1,26 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Attendance/classes app: users add students to classes (7/8/9). Reported bug that previously added students have disappeared; user requested a fix build. Also requested ability to download monthly attendance data.",
+  "summary": "Student/attendance management app: fix missing 8th/9th class students visibility across screens and add monthly student data export to Excel.",
   "architectural_notes": [],
   "known_issues": [
-    "Bug: Students previously added to classes (7/8/9) are now missing/disappeared from the app/screens."
+    "Build/deployment attempts intermittently failing with 'AI couldn't implement/complete' errors."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-add-student-flow-so-that-student-ids-are-generated-in-a-globally-unique-way-not-based-on-the-count-within-the-currently-selected-class-section",
-      "title": "Update the add-student flow so that student IDs are generated in a globally unique way (not based on the count within the currently selected class/section).",
+      "id": "feature-add-a-monthly-export-feature-that-lets-the-user-download-monthly-student-attendance-data-as-an-excel-compatible-csv-file-english-headers-with-month-selection-and-class-section-taken-from-the-current-session",
+      "title": "Add a Monthly Export feature that lets the user download monthly student attendance data as an Excel-compatible CSV file (English headers), with month selection and class/section taken from the current session.",
       "reqIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-safe-recovery-diagnostic-path-in-the-ui-for-when-the-current-class-section-shows-no-students-helping-confirm-whether-data-exists-in-the-backend-e-g-by-optionally-loading-a-count-of-all-students-and-showing-a-clear-english-error-state-message-when-unauthorized-or-when-data-is-genuinely-empty",
-      "title": "Add a safe recovery/diagnostic path in the UI for when the current class/section shows no students, helping confirm whether data exists in the backend (e.g., by optionally loading a count of all students) and showing a clear English error/state message when unauthorized or when data is genuinely empty.",
+      "id": "feature-update-the-roll-call-frontend-hooks-to-use-the-new-backend-roll-call-apis-instead-of-the-temporary-localstorage-implementation-so-attendance-data-and-monthly-export-are-consistent-across-devices-browsers",
+      "title": "Update the roll-call frontend hooks to use the new backend roll-call APIs (instead of the temporary localStorage implementation) so attendance data and monthly export are consistent across devices/browsers.",
       "reqIds": [
-        "REQ-4"
+        "REQ-5"
       ],
       "version": 1
     }
@@ -28,13 +28,19 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Allow downloading monthly attendance data (export report in PDF/Excel/CSV with month selection)",
+      "summary": "Fix: 8th and 9th class students not showing anywhere (system prompts to Add Student after selecting class/section); should behave like 7th class and display existing students.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Prevent students from disappearing when users add students in multiple classes/sections by eliminating ID collisions in the backend storage keying strategy.",
+      "summary": "Feature: Download/export student monthly data to Excel.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Fix the backend student lookup so that selecting Class 8 or Class 9 (any section) returns the already-existing students (same behavior as Class 7) instead of appearing empty and prompting users to add students.",
       "reqIds": [
         "REQ-1"
       ],
@@ -42,15 +48,22 @@
     },
     {
       "id": "AR-4",
-      "summary": "Persist student records (and any required ID counters/indexes) across canister upgrades so previously added students do not disappear after a redeploy/upgrade.",
+      "summary": "Make student storage resilient to canister upgrades so previously added students do not disappear after redeploy/upgrade; ensure any needed indexes/counters are restored correctly on upgrade.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Implement backend roll-call persistence APIs so attendance is stored in the canister (not only in browser localStorage), and can be queried for a given day and for a given month/class/section.",
       "reqIds": [
         "REQ-3"
       ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Fix missing students across classes (ID collisions + persistence across upgrades)",
+  "projectName": "Fix missing Class 8/9 students across screens and add monthly attendance export to Excel (CSV)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

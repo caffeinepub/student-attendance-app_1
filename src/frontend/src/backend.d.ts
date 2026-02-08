@@ -11,6 +11,13 @@ export interface StoredStudent {
     id: bigint;
     student: Student;
 }
+export interface DailyRollCall {
+    wasPresent: Array<boolean>;
+    date: string;
+    section: string;
+    className: string;
+    studentRecords: Array<bigint>;
+}
 export interface UserProfile {
     name: string;
     role: string;
@@ -38,9 +45,16 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getClassSectionStudents(className: string, section: string): Promise<Array<[bigint, Student]>>;
+    getDailyRollCall(year: bigint, month: string, day: bigint, arg3: string, arg4: string): Promise<DailyRollCall | null>;
+    getMonthlyClassSectionRollCall(_year: bigint, _month: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>>;
+    getMonthlyRollCall(year: bigint, month: string, arg2: string, arg3: string): Promise<Array<DailyRollCall>>;
     getStudent(id: bigint): Promise<Student | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    /**
+     * / Roll Call Management Functions
+     */
+    submitRollCall(year: bigint, month: string, day: bigint, section: string, className: string, studentRecords: Array<bigint>, wasPresent: Array<boolean>): Promise<void>;
     updateStudent(id: bigint, student: Student): Promise<void>;
 }
